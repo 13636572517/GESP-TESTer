@@ -1,0 +1,33 @@
+/* Code block styling for question content */
+pre {
+  background: #f6f8fa;
+  border: 1px solid #e1e4e8;
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin: 12px 0;
+  overflow-x: auto;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+pre code.hljs {
+  background: transparent;
+  padding: 0;
+}
+
+/* Inline code styling */
+code.inline-code {
+  background: #f0f2f5;
+  border: 1px solid #e1e4e8;
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 0.9em;
+  color: #476582;
+}
+
+code.inline-code.hljs {
+  background: #f0f2f5;
+  padding: 1px 5px;
+}
