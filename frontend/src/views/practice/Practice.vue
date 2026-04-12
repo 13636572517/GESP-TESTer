@@ -99,20 +99,21 @@ const form = ref({
 const treeData = computed(() => {
   const levelId = form.value.level_id
   const filtered = levelId ? tree.value.filter(l => l.id === levelId) : tree.value
-  return filtered.map(level => ({
-    value: `level-${level.id}`,
-    label: level.name,
-    disabled: true,
-    children: (level.chapters || []).map(ch => ({
-      value: `ch-${ch.id}`,
-      label: ch.name,
-      disabled: true,
-      children: (ch.points || []).map(p => ({
-        value: p.id,
-        label: p.name,
-      })),
-    })),
-  }))
+  // Flatten: skip level wrapper, show chapters directly with knowledge points as leaves
+  const result = []
+  for (const level of filtered) {
+    for (const ch of (level.chapters || [])) {
+      result.push({
+        value: `ch-${ch.id}`,
+        label: levelId ? ch.name : `${level.name} - ${ch.name}`,
+        children: (ch.points || []).map(p => ({
+          value: p.id,
+          label: p.name,
+        })),
+      })
+    }
+  }
+  return result
 })
 
 async function handleStart() {
@@ -132,7 +133,8 @@ async function handleStart() {
 }
 
 onMounted(async () => {
-  levels.value = await getLevels()
+  const res = await getLevels()
+  levels.value = res.results || res
   tree.value = await getKnowledgeTree()
   try {
     const res = await getPracticeHistory({ page_size: 10 })

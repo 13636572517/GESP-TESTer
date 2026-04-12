@@ -5,12 +5,12 @@ from apps.questions.serializers import QuestionBriefSerializer, QuestionSerializ
 
 class StartPracticeSerializer(serializers.Serializer):
     session_type = serializers.ChoiceField(choices=[1, 2, 3])
-    level_id = serializers.IntegerField(required=False)
+    level_id = serializers.IntegerField(required=False, allow_null=True)
     knowledge_ids = serializers.ListField(
         child=serializers.IntegerField(), required=False, default=list
     )
     count = serializers.IntegerField(min_value=1, max_value=100, default=20)
-    difficulty = serializers.IntegerField(required=False)
+    difficulty = serializers.IntegerField(required=False, allow_null=True)
 
 
 class SubmitAnswerSerializer(serializers.Serializer):

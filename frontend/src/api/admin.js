@@ -39,3 +39,10 @@ export const updateExamTemplate = (id, data) => request.put(`/admin/exam-templat
 
 // 知识点内容编辑
 export const updateKnowledgeContent = (id, data) => request.post(`/admin/knowledge/${id}/content/`, data)
+
+// 知识点CSV导入/导出
+export const importKnowledgeCsv = (formData) => request.post('/admin/knowledge/import-csv/', formData, {
+  headers: { 'Content-Type': 'multipart/form-data' },
+})
+export const downloadKnowledgeCsvTemplate = () => authBlobGet('/admin/knowledge/csv-template/')
+export const exportKnowledgeCsv = (params) => authBlobGet('/admin/knowledge/export/', params)

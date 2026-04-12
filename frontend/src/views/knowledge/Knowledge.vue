@@ -55,7 +55,8 @@ function handleLevelChange() {
 }
 
 onMounted(async () => {
-  levels.value = await getLevels()
+  const res = await getLevels()
+  levels.value = res.results || res
   tree.value = await getKnowledgeTree()
 })
 </script>
