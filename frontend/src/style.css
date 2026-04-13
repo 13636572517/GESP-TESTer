@@ -8,7 +8,7 @@ html, body, #app {
   height: 100%;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   color: #303133;
-  background: #f5f7fa;
+  background: #f5f3ff;
 }
 
 .page-container {
@@ -18,10 +18,13 @@ html, body, #app {
 }
 
 .page-title {
-  font-size: 22px;
-  font-weight: 600;
-  margin-bottom: 20px;
-  color: #303133;
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 24px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .card-grid {
@@ -33,7 +36,7 @@ html, body, #app {
 .stat-value {
   font-size: 28px;
   font-weight: 700;
-  color: #409eff;
+  color: #6366f1;
 }
 
 .stat-label {

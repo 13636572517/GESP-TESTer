@@ -232,7 +232,7 @@ onUnmounted(() => {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #f5f7fa;
+  background: #f5f3ff;
 }
 .exam-header {
   display: flex;
@@ -249,10 +249,10 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #303133;
+  color: #374151;
 }
 .timer.warning {
-  color: #f56c6c;
+  color: #ef4444;
   animation: blink 1s infinite;
 }
 @keyframes blink {
@@ -278,7 +278,7 @@ onUnmounted(() => {
   line-height: 1.8;
   margin-bottom: 20px;
   padding: 16px;
-  background: #fafafa;
+  background: #f5f3ff;
   border-radius: 8px;
 }
 .options {
@@ -296,16 +296,16 @@ onUnmounted(() => {
   cursor: pointer;
   transition: all 0.2s;
 }
-.option-item:hover { border-color: #409eff; }
+.option-item:hover { border-color: #6366f1; }
 .option-item.selected {
-  border-color: #409eff;
-  background: #ecf5ff;
+  border-color: #6366f1;
+  background: #eef2ff;
 }
 .option-key {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: #f0f0f0;
+  background: #e0e7ff;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -329,13 +329,13 @@ onUnmounted(() => {
   font-size: 14px;
 }
 .nav-item.active {
-  border-color: #409eff;
-  color: #409eff;
+  border-color: #6366f1;
+  color: #6366f1;
   font-weight: 600;
 }
 .nav-item.answered {
-  background: #409eff;
+  background: #6366f1;
   color: #fff;
-  border-color: #409eff;
+  border-color: #6366f1;
 }
 </style>

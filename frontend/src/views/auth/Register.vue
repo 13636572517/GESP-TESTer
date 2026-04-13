@@ -1,6 +1,7 @@
 <template>
   <div class="auth-page">
     <div class="auth-card">
+      <div style="text-align: center; margin-bottom: 8px; font-size: 40px">📝</div>
       <h2>注册账号</h2>
       <el-form :model="form" @submit.prevent="handleRegister">
         <el-form-item>
@@ -15,17 +16,17 @@
           </div>
         </el-form-item>
         <el-form-item>
-          <el-input v-model="form.nickname" placeholder="昵称（选填）" />
-        </el-form-item>
-        <el-form-item>
           <el-input v-model="form.password" type="password" placeholder="设置密码（至少6位）" show-password />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" native-type="submit" :loading="loading" style="width: 100%">注册</el-button>
+          <el-input v-model="form.nickname" placeholder="昵称（选填）" maxlength="50" />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" native-type="submit" :loading="loading" style="width: 100%; height: 44px; font-size: 16px">注册</el-button>
         </el-form-item>
       </el-form>
       <div style="text-align: center; margin-top: 8px">
-        <router-link to="/login" style="color: #409eff; text-decoration: none; font-size: 14px">已有账号？去登录</router-link>
+        <router-link to="/login" style="color: #6366f1; text-decoration: none; font-size: 14px">已有账号？去登录</router-link>
       </div>
     </div>
   </div>
@@ -35,11 +36,9 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { useUserStore } from '../../stores/user'
 import { registerUser, sendSms } from '../../api/auth'
 
 const router = useRouter()
-const userStore = useUserStore()
 const loading = ref(false)
 const countdown = ref(0)
 const form = ref({ phone: '', code: '', password: '', nickname: '' })
@@ -61,15 +60,11 @@ async function handleRegister() {
   if (!form.value.phone || !form.value.code || !form.value.password) {
     return ElMessage.warning('请填写完整信息')
   }
-  if (form.value.password.length < 6) {
-    return ElMessage.warning('密码至少6位')
-  }
   loading.value = true
   try {
-    const data = await registerUser(form.value)
-    userStore.setTokens(data.access, data.refresh)
-    ElMessage.success('注册成功')
-    router.push('/')
+    await registerUser(form.value)
+    ElMessage.success('注册成功，请登录')
+    router.push('/login')
   } finally {
     loading.value = false
   }
@@ -82,18 +77,23 @@ async function handleRegister() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%);
 }
 .auth-card {
   width: 420px;
   padding: 40px;
   background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  border-top: 4px solid #6366f1;
 }
 .auth-card h2 {
   text-align: center;
   margin-bottom: 24px;
-  color: #303133;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-size: 22px;
 }
 </style>

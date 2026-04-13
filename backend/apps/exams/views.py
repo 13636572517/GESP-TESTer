@@ -71,29 +71,42 @@ def start_exam(request):
             )
 
     elif exam_type == 2 and level_id:
-        # 随机组卷
-        count = request.data.get('count', 50)
-        duration = request.data.get('duration', 90)
+        # 随机组卷：固定15道选择题 + 10道判断题，先选择后判断
+        CHOICE_COUNT = 15
+        JUDGE_COUNT = 10
+        DURATION = 60
 
-        question_ids = list(Question.objects.filter(
-            level_id=level_id, is_active=True
+        choice_ids = list(Question.objects.filter(
+            level_id=level_id, is_active=True, question_type=1
+        ).values_list('id', flat=True))
+        judge_ids = list(Question.objects.filter(
+            level_id=level_id, is_active=True, question_type=3
         ).values_list('id', flat=True))
 
-        if len(question_ids) < count:
-            count = len(question_ids)
-        if not question_ids:
+        if not choice_ids and not judge_ids:
             return Response({'detail': '该级别暂无题目'}, status=400)
 
-        selected = random.sample(question_ids, count)
-        score_per_q = 100 // count
+        actual_choice = min(CHOICE_COUNT, len(choice_ids))
+        actual_judge = min(JUDGE_COUNT, len(judge_ids))
+
+        if actual_choice == 0 and actual_judge == 0:
+            return Response({'detail': '该级别暂无题目'}, status=400)
+
+        selected_choice = random.sample(choice_ids, actual_choice) if actual_choice else []
+        selected_judge = random.sample(judge_ids, actual_judge) if actual_judge else []
+
+        # 先选择题，再判断题
+        selected = selected_choice + selected_judge
+        total_count = len(selected)
+        score_per_q = 100 // total_count if total_count else 0
 
         record = ExamRecord.objects.create(
             user=request.user,
             level_id=level_id,
             exam_type=2,
-            duration=duration,
+            duration=DURATION,
             start_time=timezone.now(),
-            total_score=score_per_q * count,
+            total_score=score_per_q * total_count,
         )
 
         for qid in selected:

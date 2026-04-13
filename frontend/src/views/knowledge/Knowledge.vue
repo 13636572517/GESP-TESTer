@@ -69,9 +69,11 @@ onMounted(async () => {
   padding: 12px 16px;
   cursor: pointer;
   border-radius: 6px;
-  transition: background 0.2s;
+  transition: all 0.2s;
 }
 .knowledge-item:hover {
-  background: #f5f7fa;
+  background: #f5f3ff;
+  border-left: 3px solid #6366f1;
+  padding-left: 13px;
 }
 </style>

@@ -5,7 +5,7 @@
     <el-row :gutter="20">
       <el-col :span="16">
         <el-card>
-          <template #header>练习设置</template>
+          <template #header><span style="font-weight: 600">⚙️ 练习设置</span></template>
           <el-form :model="form" label-width="100px">
             <el-form-item label="练习类型">
               <el-radio-group v-model="form.session_type">
@@ -46,7 +46,7 @@
             </el-form-item>
 
             <el-form-item>
-              <el-button type="primary" size="large" @click="handleStart" :loading="loading">
+              <el-button type="primary" size="large" @click="handleStart" :loading="loading" style="height: 48px; font-size: 16px; width: 200px">
                 开始练习
               </el-button>
             </el-form-item>
@@ -56,7 +56,7 @@
 
       <el-col :span="8">
         <el-card>
-          <template #header>最近练习</template>
+          <template #header><span style="font-weight: 600">📋 最近练习</span></template>
           <div v-for="item in history" :key="item.id" style="padding: 8px 0; border-bottom: 1px solid #f0f0f0">
             <div style="display: flex; justify-content: space-between">
               <span style="font-size: 13px; color: #909399">{{ item.created_at }}</span>

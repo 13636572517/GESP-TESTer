@@ -55,7 +55,7 @@
       <!-- 答题结果 -->
       <div v-if="currentResult" class="result-box" :class="currentResult.is_correct ? 'correct' : 'wrong'">
         <div style="font-weight: 600; margin-bottom: 8px">
-          {{ currentResult.is_correct ? '回答正确!' : '回答错误' }}
+          {{ currentResult.is_correct ? '✅ 回答正确!' : '❌ 回答错误' }}
           <span v-if="!currentResult.is_correct" style="margin-left: 8px">正确答案: {{ currentResult.correct_answer }}</span>
         </div>
         <div v-if="currentResult.explanation" style="color: #606266; font-size: 14px">
@@ -179,7 +179,7 @@ onMounted(() => {
   line-height: 1.8;
   margin-bottom: 20px;
   padding: 16px;
-  background: #fafafa;
+  background: #f5f3ff;
   border-radius: 8px;
 }
 .options {
@@ -198,25 +198,25 @@ onMounted(() => {
   transition: all 0.2s;
 }
 .option-item:hover {
-  border-color: #409eff;
+  border-color: #6366f1;
 }
 .option-item.selected {
-  border-color: #409eff;
-  background: #ecf5ff;
+  border-color: #6366f1;
+  background: #eef2ff;
 }
 .option-item.correct {
-  border-color: #67c23a;
-  background: #f0f9eb;
+  border-color: #10b981;
+  background: #ecfdf5;
 }
 .option-item.wrong {
-  border-color: #f56c6c;
-  background: #fef0f0;
+  border-color: #ef4444;
+  background: #fef2f2;
 }
 .option-key {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: #f0f0f0;
+  background: #e0e7ff;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -229,12 +229,12 @@ onMounted(() => {
   border-radius: 8px;
 }
 .result-box.correct {
-  background: #f0f9eb;
-  border: 1px solid #e1f3d8;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
 }
 .result-box.wrong {
-  background: #fef0f0;
-  border: 1px solid #fde2e2;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
 }
 .question-nav {
   display: flex;
@@ -253,18 +253,18 @@ onMounted(() => {
   font-size: 14px;
 }
 .nav-item.active {
-  border-color: #409eff;
-  color: #409eff;
+  border-color: #6366f1;
+  color: #6366f1;
   font-weight: 600;
 }
 .nav-item.correct {
-  background: #67c23a;
+  background: #10b981;
   color: #fff;
-  border-color: #67c23a;
+  border-color: #10b981;
 }
 .nav-item.wrong {
-  background: #f56c6c;
+  background: #ef4444;
   color: #fff;
-  border-color: #f56c6c;
+  border-color: #ef4444;
 }
 </style>

@@ -1,6 +1,7 @@
 <template>
   <div class="auth-page">
     <div class="auth-card">
+      <div style="text-align: center; margin-bottom: 8px; font-size: 40px">🔑</div>
       <h2>重置密码</h2>
       <el-form :model="form" @submit.prevent="handleReset">
         <el-form-item>
@@ -18,11 +19,11 @@
           <el-input v-model="form.new_password" type="password" placeholder="新密码（至少6位）" show-password />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" native-type="submit" :loading="loading" style="width: 100%">重置密码</el-button>
+          <el-button type="primary" native-type="submit" :loading="loading" style="width: 100%; height: 44px; font-size: 16px">重置密码</el-button>
         </el-form-item>
       </el-form>
       <div style="text-align: center; margin-top: 8px">
-        <router-link to="/login" style="color: #409eff; text-decoration: none; font-size: 14px">返回登录</router-link>
+        <router-link to="/login" style="color: #6366f1; text-decoration: none; font-size: 14px">返回登录</router-link>
       </div>
     </div>
   </div>
@@ -73,18 +74,23 @@ async function handleReset() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%);
 }
 .auth-card {
   width: 420px;
   padding: 40px;
   background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  border-top: 4px solid #6366f1;
 }
 .auth-card h2 {
   text-align: center;
   margin-bottom: 24px;
-  color: #303133;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-size: 22px;
 }
 </style>

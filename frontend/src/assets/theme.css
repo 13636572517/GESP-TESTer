@@ -1,0 +1,138 @@
+/* ============================================
+   GESP 训练平台 - 清新活泼主题
+   ============================================ */
+
+/* === Element Plus CSS 变量覆盖 === */
+:root {
+  --el-color-primary: #6366f1;
+  --el-color-primary-light-3: #818cf8;
+  --el-color-primary-light-5: #a5b4fc;
+  --el-color-primary-light-7: #c7d2fe;
+  --el-color-primary-light-9: #e0e7ff;
+  --el-color-primary-dark-2: #4f46e5;
+  --el-border-radius-base: 8px;
+  --el-border-radius-small: 6px;
+  --el-border-radius-round: 20px;
+  --el-fill-color-light: #f5f3ff;
+}
+
+/* === el-card 全局优化 === */
+.el-card {
+  border-radius: 16px !important;
+  border: none !important;
+  box-shadow: 0 4px 24px rgba(99, 102, 241, 0.08) !important;
+  transition: box-shadow 0.3s, transform 0.3s !important;
+}
+.el-card:hover {
+  box-shadow: 0 8px 32px rgba(99, 102, 241, 0.12) !important;
+}
+
+/* === el-button 圆角 + 主按钮渐变 === */
+.el-button {
+  border-radius: 10px !important;
+  font-weight: 500;
+}
+.el-button--primary {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+  border: none !important;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+.el-button--primary:hover {
+  background: linear-gradient(135deg, #4f46e5, #7c3aed) !important;
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+}
+.el-button--success {
+  background: linear-gradient(135deg, #10b981, #34d399) !important;
+  border: none !important;
+}
+.el-button--warning {
+  background: linear-gradient(135deg, #f59e0b, #fbbf24) !important;
+  border: none !important;
+}
+.el-button--danger {
+  background: linear-gradient(135deg, #ef4444, #f87171) !important;
+  border: none !important;
+}
+
+/* === el-tag 圆角 === */
+.el-tag {
+  border-radius: 6px !important;
+}
+
+/* === el-dialog 圆角 === */
+.el-dialog {
+  border-radius: 20px !important;
+  overflow: hidden;
+}
+
+/* === el-table 圆角 === */
+.el-table {
+  border-radius: 12px !important;
+  overflow: hidden;
+}
+
+/* === el-input 圆角 === */
+.el-input__wrapper {
+  border-radius: 8px !important;
+}
+.el-select .el-input__wrapper {
+  border-radius: 8px !important;
+}
+
+/* === el-tabs 美化 === */
+.el-tabs__item.is-active {
+  color: #6366f1 !important;
+  font-weight: 600;
+}
+.el-tabs__active-bar {
+  background: linear-gradient(90deg, #6366f1, #8b5cf6) !important;
+  border-radius: 2px;
+}
+
+/* === el-progress 颜色 === */
+.el-progress-bar__inner {
+  border-radius: 10px !important;
+}
+
+/* === 渐变统计卡工具类 === */
+.gradient-card {
+  padding: 20px;
+  border-radius: 16px;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+.gradient-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
+}
+.gradient-card .card-emoji {
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+.gradient-card .card-value {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.gradient-card .card-label {
+  font-size: 13px;
+  opacity: 0.9;
+  margin-top: 4px;
+}
+.gradient-card.purple { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
+.gradient-card.green  { background: linear-gradient(135deg, #10b981, #34d399); }
+.gradient-card.orange { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
+.gradient-card.pink   { background: linear-gradient(135deg, #ec4899, #f472b6); }
+.gradient-card.blue   { background: linear-gradient(135deg, #3b82f6, #60a5fa); }
+.gradient-card.red    { background: linear-gradient(135deg, #ef4444, #f87171); }
+.gradient-card.teal   { background: linear-gradient(135deg, #14b8a6, #2dd4bf); }
+
+/* 渐变文字工具类 */
+.gradient-text {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}

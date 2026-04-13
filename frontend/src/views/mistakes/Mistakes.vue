@@ -4,13 +4,13 @@
 
     <el-row :gutter="16" style="margin-bottom: 20px">
       <el-col :span="6">
-        <el-card shadow="hover" style="cursor: pointer" @click="handleReview">
+        <div class="gradient-card orange" style="cursor: pointer; height: 100%" @click="handleReview">
           <div style="text-align: center">
-            <el-icon :size="32" color="#e6a23c"><Refresh /></el-icon>
+            <div style="font-size: 32px">🔄</div>
             <div style="margin-top: 8px; font-weight: 600">错题复习</div>
-            <div style="font-size: 13px; color: #909399">自动生成薄弱知识点复习卷</div>
+            <div style="font-size: 13px; opacity: 0.9">自动生成薄弱知识点复习卷</div>
           </div>
-        </el-card>
+        </div>
       </el-col>
       <el-col :span="18">
         <el-card>
@@ -107,7 +107,7 @@ onMounted(async () => {
 <style scoped>
 .mistake-item {
   padding: 16px 0;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid #f0f0ff;
 }
 .mistake-item:last-child {
   border-bottom: none;

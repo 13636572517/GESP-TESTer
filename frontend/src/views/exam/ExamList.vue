@@ -6,7 +6,7 @@
       <el-tab-pane label="选择试卷" name="templates">
         <el-row :gutter="16">
           <el-col :span="8" v-for="tpl in templates" :key="tpl.id">
-            <el-card shadow="hover" style="margin-bottom: 16px; cursor: pointer" @click="handleStartExam(tpl)">
+            <el-card shadow="hover" style="margin-bottom: 16px; cursor: pointer; transition: transform 0.2s" @click="handleStartExam(tpl)">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px">
                 <el-tag>{{ tpl.level_name }}</el-tag>
                 <el-tag type="info" size="small">{{ tpl.template_type === 1 ? '真题' : '模拟' }}</el-tag>
@@ -23,15 +23,12 @@
         <el-divider>或者随机组卷</el-divider>
         <el-form :inline="true" :model="randomForm">
           <el-form-item label="级别">
-            <el-select v-model="randomForm.level_id" placeholder="选择级别">
+            <el-select v-model="randomForm.level_id" placeholder="选择级别" style="width: 220px">
               <el-option v-for="l in levels" :key="l.id" :label="l.name" :value="l.id" />
             </el-select>
           </el-form-item>
-          <el-form-item label="题数">
-            <el-input-number v-model="randomForm.count" :min="10" :max="100" :step="10" />
-          </el-form-item>
-          <el-form-item label="时长(分钟)">
-            <el-input-number v-model="randomForm.duration" :min="30" :max="180" :step="15" />
+          <el-form-item>
+            <span style="color: #909399; font-size: 13px">15道选择题 + 10道判断题，共25题，60分钟</span>
           </el-form-item>
           <el-form-item>
             <el-button type="primary" @click="handleRandomExam">开始随机模考</el-button>
@@ -45,7 +42,7 @@
           <el-table-column prop="level_name" label="级别" width="100" />
           <el-table-column label="得分" width="120">
             <template #default="{ row }">
-              <span :style="{ color: row.earned_score >= (row.total_score * 0.6) ? '#67c23a' : '#f56c6c', fontWeight: 600 }">
+              <span :style="{ color: row.earned_score >= (row.total_score * 0.6) ? '#10b981' : '#ef4444', fontWeight: 600 }">
                 {{ row.earned_score }} / {{ row.total_score }}
               </span>
             </template>
@@ -84,8 +81,6 @@ const levels = ref([])
 
 const randomForm = ref({
   level_id: 1,
-  count: 50,
-  duration: 90,
 })
 
 async function handleStartExam(tpl) {
@@ -105,8 +100,6 @@ async function handleRandomExam() {
   const data = await startExam({
     level_id: randomForm.value.level_id,
     exam_type: 2,
-    count: randomForm.value.count,
-    duration: randomForm.value.duration,
   })
   router.push(`/exam/${data.record_id}/session`)
 }

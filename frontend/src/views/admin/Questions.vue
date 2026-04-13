@@ -7,7 +7,7 @@
       <el-col :span="4" v-for="s in levelStats" :key="s.label">
         <el-card shadow="never" body-style="padding: 12px">
           <div style="text-align: center">
-            <div style="font-size: 22px; font-weight: 700; color: #409eff">{{ s.count }}</div>
+            <div style="font-size: 22px; font-weight: 700; color: #6366f1">{{ s.count }}</div>
             <div style="font-size: 12px; color: #909399">{{ s.label }}</div>
           </div>
         </el-card>
@@ -663,7 +663,7 @@ onMounted(() => {
   line-height: 1.5;
 }
 .question-preview:hover {
-  color: #409eff;
+  color: #6366f1;
 }
 
 .preview-box {
@@ -692,8 +692,8 @@ onMounted(() => {
   font-size: 14px;
 }
 .preview-option.correct {
-  border-color: #67c23a;
-  background: #f0f9eb;
+  border-color: #10b981;
+  background: #ecfdf5;
 }
 .opt-key {
   width: 26px;
@@ -708,7 +708,7 @@ onMounted(() => {
   flex-shrink: 0;
 }
 .preview-option.correct .opt-key {
-  background: #67c23a;
+  background: #10b981;
   color: #fff;
 }
 </style>

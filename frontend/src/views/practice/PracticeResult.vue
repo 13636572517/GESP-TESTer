@@ -8,8 +8,11 @@
       <el-col :span="8">
         <el-card>
           <div style="text-align: center">
-            <div class="stat-value" style="font-size: 48px">{{ result.accuracy }}%</div>
+            <div class="gradient-text" style="font-size: 56px; font-weight: 700">{{ result.accuracy }}%</div>
             <div class="stat-label">正确率</div>
+            <div v-if="result.accuracy >= 80" style="color: #10b981; margin-top: 8px; font-weight: 500">🎉 太棒了！继续保持！</div>
+            <div v-else-if="result.accuracy >= 60" style="color: #f59e0b; margin-top: 8px; font-weight: 500">💪 不错，再接再厉！</div>
+            <div v-else style="color: #ef4444; margin-top: 8px; font-weight: 500">📚 加油！多多练习！</div>
             <div style="margin-top: 12px; color: #606266">
               {{ result.correct_count }} / {{ result.total_count }} 题
             </div>
@@ -19,7 +22,7 @@
       <el-col :span="16">
         <el-card>
           <template #header>答题详情</template>
-          <div v-for="(answer, i) in result.answers || []" :key="answer.id" style="padding: 12px 0; border-bottom: 1px solid #f0f0f0">
+          <div v-for="(answer, i) in result.answers || []" :key="answer.id" style="padding: 12px 0; border-bottom: 1px solid #f0f0ff">
             <div style="display: flex; justify-content: space-between; align-items: center">
               <span>第 {{ i + 1 }} 题</span>
               <el-tag :type="answer.is_correct ? 'success' : 'danger'" size="small">

@@ -11,14 +11,14 @@
               :before-upload="handleAvatarUpload"
               accept="image/*"
             >
-              <el-avatar :size="80" :src="userStore.userInfo?.avatar || undefined" style="cursor: pointer">
+              <el-avatar :size="80" :src="userStore.userInfo?.avatar || undefined" style="cursor: pointer; border: 3px solid #6366f1; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2)">
                 {{ (userStore.userInfo?.nickname || 'U')[0] }}
               </el-avatar>
             </el-upload>
             <div style="margin-top: 12px; font-size: 18px; font-weight: 600">
               {{ userStore.userInfo?.nickname || '未设置昵称' }}
             </div>
-            <div style="color: #909399; margin-top: 4px">
+            <div style="color: #6b7280; margin-top: 4px">
               {{ userStore.userInfo?.phone }}
             </div>
           </div>

@@ -4,12 +4,13 @@
 
     <el-row :gutter="16" style="margin-bottom: 20px">
       <el-col :span="4" v-for="item in statCards" :key="item.label">
-        <el-card shadow="hover">
+        <div :class="['gradient-card', item.color]">
           <div style="text-align: center">
-            <div class="stat-value" style="font-size: 24px">{{ item.value }}</div>
-            <div class="stat-label">{{ item.label }}</div>
+            <div style="font-size: 20px">{{ item.emoji }}</div>
+            <div class="card-value" style="font-size: 22px">{{ item.value }}</div>
+            <div class="card-label">{{ item.label }}</div>
           </div>
-        </el-card>
+        </div>
       </el-col>
     </el-row>
 
@@ -77,17 +78,17 @@ const weakness = ref([])
 const masteryLevel = ref(1)
 
 const statCards = computed(() => [
-  { label: '总做题', value: overview.value.total_practice || 0 },
-  { label: '正确率', value: `${overview.value.accuracy || 0}%` },
-  { label: '总考试', value: overview.value.total_exams || 0 },
-  { label: '学习天数', value: overview.value.study_days || 0 },
-  { label: '学习时长', value: `${overview.value.study_minutes || 0}min` },
-  { label: '待复习', value: overview.value.unmastered_mistakes || 0 },
+  { label: '总做题', value: overview.value.total_practice || 0, emoji: '✏️', color: 'purple' },
+  { label: '正确率', value: `${overview.value.accuracy || 0}%`, emoji: '✅', color: 'green' },
+  { label: '总考试', value: overview.value.total_exams || 0, emoji: '📝', color: 'blue' },
+  { label: '学习天数', value: overview.value.study_days || 0, emoji: '📅', color: 'orange' },
+  { label: '学习时长', value: `${overview.value.study_minutes || 0}min`, emoji: '⏱️', color: 'teal' },
+  { label: '待复习', value: overview.value.unmastered_mistakes || 0, emoji: '📚', color: 'pink' },
 ])
 
 function getMasteryColor(level) {
-  const colors = ['#909399', '#f56c6c', '#e6a23c', '#409eff', '#67c23a']
-  return colors[level] || '#909399'
+  const colors = ['#6b7280', '#ef4444', '#f59e0b', '#6366f1', '#10b981']
+  return colors[level] || '#6b7280'
 }
 
 async function loadMastery() {

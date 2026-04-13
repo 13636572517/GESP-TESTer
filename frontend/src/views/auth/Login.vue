@@ -1,6 +1,7 @@
 <template>
   <div class="auth-page">
     <div class="auth-card">
+      <div style="text-align: center; margin-bottom: 8px; font-size: 40px">🎯</div>
       <h2>GESP考试训练平台</h2>
       <el-tabs v-model="loginType">
         <el-tab-pane label="密码登录" name="password">
@@ -12,7 +13,7 @@
               <el-input v-model="form.password" type="password" placeholder="密码" :prefix-icon="Lock" show-password />
             </el-form-item>
             <el-form-item>
-              <el-button type="primary" native-type="submit" :loading="loading" style="width: 100%">登录</el-button>
+              <el-button type="primary" native-type="submit" :loading="loading" style="width: 100%; height: 44px; font-size: 16px">登录</el-button>
             </el-form-item>
           </el-form>
         </el-tab-pane>
@@ -30,7 +31,7 @@
               </div>
             </el-form-item>
             <el-form-item>
-              <el-button type="primary" native-type="submit" :loading="loading" style="width: 100%">登录</el-button>
+              <el-button type="primary" native-type="submit" :loading="loading" style="width: 100%; height: 44px; font-size: 16px">登录</el-button>
             </el-form-item>
           </el-form>
         </el-tab-pane>
@@ -111,19 +112,24 @@ async function sendCode(purpose) {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%);
 }
 .auth-card {
   width: 420px;
   padding: 40px;
   background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  border-top: 4px solid #6366f1;
 }
 .auth-card h2 {
   text-align: center;
   margin-bottom: 24px;
-  color: #303133;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-size: 22px;
 }
 .auth-links {
   display: flex;
@@ -131,8 +137,11 @@ async function sendCode(purpose) {
   margin-top: 8px;
 }
 .auth-links a {
-  color: #409eff;
+  color: #6366f1;
   text-decoration: none;
   font-size: 14px;
+}
+.auth-links a:hover {
+  color: #4f46e5;
 }
 </style>
