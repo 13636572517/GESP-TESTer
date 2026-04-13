@@ -11,7 +11,7 @@
               :before-upload="handleAvatarUpload"
               accept="image/*"
             >
-              <el-avatar :size="80" :src="userStore.userInfo?.avatar || undefined" style="cursor: pointer; border: 3px solid #6366f1; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2)">
+              <el-avatar :size="80" :src="userStore.userInfo?.avatar || undefined" style="cursor: pointer; border: 3px solid #1865F2">
                 {{ (userStore.userInfo?.nickname || 'U')[0] }}
               </el-avatar>
             </el-upload>

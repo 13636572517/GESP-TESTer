@@ -5,7 +5,7 @@
     <el-row :gutter="20">
       <el-col :span="16">
         <el-card>
-          <template #header><span style="font-weight: 600">⚙️ 练习设置</span></template>
+          <template #header><span style="font-weight: 600">练习设置</span></template>
           <el-form :model="form" label-width="100px">
             <el-form-item label="练习类型">
               <el-radio-group v-model="form.session_type">
@@ -56,10 +56,10 @@
 
       <el-col :span="8">
         <el-card>
-          <template #header><span style="font-weight: 600">📋 最近练习</span></template>
-          <div v-for="item in history" :key="item.id" style="padding: 8px 0; border-bottom: 1px solid #f0f0f0">
+          <template #header><span style="font-weight: 600">最近练习</span></template>
+          <div v-for="item in history" :key="item.id" style="padding: 8px 0; border-bottom: 1px solid #E5E7EB">
             <div style="display: flex; justify-content: space-between">
-              <span style="font-size: 13px; color: #909399">{{ item.created_at }}</span>
+              <span style="font-size: 13px; color: #6B7280">{{ item.created_at }}</span>
               <el-tag size="small" :type="item.accuracy >= 80 ? 'success' : item.accuracy >= 60 ? 'warning' : 'danger'">
                 {{ item.accuracy }}%
               </el-tag>

@@ -19,7 +19,7 @@
         <el-card v-if="currentQuestion">
           <div class="question-header">
             <el-tag>{{ currentQuestion.type_display }}</el-tag>
-            <span style="margin-left: 8px; color: #909399">第 {{ currentIndex + 1 }}/{{ questions.length }} 题</span>
+            <span style="margin-left: 8px; color: #6B7280">第 {{ currentIndex + 1 }}/{{ questions.length }} 题</span>
           </div>
 
           <div class="question-content" v-html="currentQuestion.content" v-highlight></div>
@@ -74,7 +74,7 @@
               {{ i + 1 }}
             </div>
           </div>
-          <div style="margin-top: 16px; font-size: 14px; color: #909399">
+          <div style="margin-top: 16px; font-size: 14px; color: #6B7280">
             已答: {{ answeredCount }} / {{ questions.length }}
           </div>
         </el-card>
@@ -84,9 +84,9 @@
     <!-- 切屏警告弹窗 -->
     <el-dialog v-model="showSwitchWarning" title="警告" :close-on-click-modal="false" width="400px">
       <div style="text-align: center; padding: 20px">
-        <el-icon :size="48" color="#f56c6c"><WarningFilled /></el-icon>
+        <el-icon :size="48" color="#D92916"><WarningFilled /></el-icon>
         <p style="margin-top: 16px; font-size: 16px">您已切屏 {{ switchCount }} 次</p>
-        <p style="color: #909399">考试中请勿离开页面</p>
+        <p style="color: #6B7280">考试中请勿离开页面</p>
       </div>
       <template #footer>
         <el-button type="primary" @click="showSwitchWarning = false">我知道了</el-button>
@@ -232,7 +232,7 @@ onUnmounted(() => {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #f5f3ff;
+  background: #F7F8FA;
 }
 .exam-header {
   display: flex;
@@ -249,10 +249,10 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #374151;
+  color: #21242C;
 }
 .timer.warning {
-  color: #ef4444;
+  color: #D92916;
   animation: blink 1s infinite;
 }
 @keyframes blink {
@@ -278,7 +278,7 @@ onUnmounted(() => {
   line-height: 1.8;
   margin-bottom: 20px;
   padding: 16px;
-  background: #f5f3ff;
+  background: #F7F8FA;
   border-radius: 8px;
 }
 .options {
@@ -296,16 +296,16 @@ onUnmounted(() => {
   cursor: pointer;
   transition: all 0.2s;
 }
-.option-item:hover { border-color: #6366f1; }
+.option-item:hover { border-color: #1865F2; }
 .option-item.selected {
-  border-color: #6366f1;
+  border-color: #1865F2;
   background: #eef2ff;
 }
 .option-key {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: #e0e7ff;
+  background: #EBF0FF;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -329,13 +329,13 @@ onUnmounted(() => {
   font-size: 14px;
 }
 .nav-item.active {
-  border-color: #6366f1;
-  color: #6366f1;
+  border-color: #1865F2;
+  color: #1865F2;
   font-weight: 600;
 }
 .nav-item.answered {
-  background: #6366f1;
+  background: #1865F2;
   color: #fff;
-  border-color: #6366f1;
+  border-color: #1865F2;
 }
 </style>

@@ -1,138 +1,146 @@
 /* ============================================
-   GESP 训练平台 - 清新活泼主题
+   GESP 训练平台 - Khan Academy 风格主题
+   参考 Wonder Blocks 设计系统
    ============================================ */
 
 /* === Element Plus CSS 变量覆盖 === */
 :root {
-  --el-color-primary: #6366f1;
-  --el-color-primary-light-3: #818cf8;
-  --el-color-primary-light-5: #a5b4fc;
-  --el-color-primary-light-7: #c7d2fe;
-  --el-color-primary-light-9: #e0e7ff;
-  --el-color-primary-dark-2: #4f46e5;
+  --el-color-primary: #1865F2;
+  --el-color-primary-light-3: #4D8AF5;
+  --el-color-primary-light-5: #8CB3F9;
+  --el-color-primary-light-7: #B8D1FB;
+  --el-color-primary-light-9: #EBF0FF;
+  --el-color-primary-dark-2: #1551C9;
+  --el-color-success: #00A60E;
+  --el-color-warning: #FFB100;
+  --el-color-danger: #D92916;
   --el-border-radius-base: 8px;
   --el-border-radius-small: 6px;
   --el-border-radius-round: 20px;
-  --el-fill-color-light: #f5f3ff;
+  --el-fill-color-light: #F7F8FA;
+  --el-text-color-primary: #21242C;
+  --el-text-color-regular: #21242C;
+  --el-border-color: #E5E7EB;
 }
 
-/* === el-card 全局优化 === */
+/* === el-card === */
 .el-card {
-  border-radius: 16px !important;
-  border: none !important;
-  box-shadow: 0 4px 24px rgba(99, 102, 241, 0.08) !important;
-  transition: box-shadow 0.3s, transform 0.3s !important;
+  border-radius: 12px !important;
+  border: 1px solid #E5E7EB !important;
+  box-shadow: none !important;
+  transition: box-shadow 0.2s !important;
 }
 .el-card:hover {
-  box-shadow: 0 8px 32px rgba(99, 102, 241, 0.12) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
 }
 
-/* === el-button 圆角 + 主按钮渐变 === */
+/* === el-button === */
 .el-button {
-  border-radius: 10px !important;
-  font-weight: 500;
+  border-radius: 8px !important;
+  font-weight: 600;
 }
 .el-button--primary {
-  background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
-  border: none !important;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  background-color: #1865F2 !important;
+  border-color: #1865F2 !important;
 }
-.el-button--primary:hover {
-  background: linear-gradient(135deg, #4f46e5, #7c3aed) !important;
-  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+.el-button--primary:hover,
+.el-button--primary:focus {
+  background-color: #1551C9 !important;
+  border-color: #1551C9 !important;
 }
 .el-button--success {
-  background: linear-gradient(135deg, #10b981, #34d399) !important;
-  border: none !important;
+  background-color: #00A60E !important;
+  border-color: #00A60E !important;
+}
+.el-button--success:hover {
+  background-color: #008A0B !important;
+  border-color: #008A0B !important;
 }
 .el-button--warning {
-  background: linear-gradient(135deg, #f59e0b, #fbbf24) !important;
-  border: none !important;
+  background-color: #FFB100 !important;
+  border-color: #FFB100 !important;
+  color: #21242C !important;
 }
 .el-button--danger {
-  background: linear-gradient(135deg, #ef4444, #f87171) !important;
-  border: none !important;
+  background-color: #D92916 !important;
+  border-color: #D92916 !important;
 }
 
-/* === el-tag 圆角 === */
+/* === el-tag === */
 .el-tag {
-  border-radius: 6px !important;
+  border-radius: 4px !important;
 }
 
-/* === el-dialog 圆角 === */
+/* === el-dialog === */
 .el-dialog {
-  border-radius: 20px !important;
+  border-radius: 16px !important;
   overflow: hidden;
 }
 
-/* === el-table 圆角 === */
+/* === el-table === */
 .el-table {
-  border-radius: 12px !important;
+  border-radius: 8px !important;
   overflow: hidden;
 }
 
-/* === el-input 圆角 === */
+/* === el-input === */
 .el-input__wrapper {
   border-radius: 8px !important;
 }
-.el-select .el-input__wrapper {
-  border-radius: 8px !important;
-}
 
-/* === el-tabs 美化 === */
+/* === el-tabs === */
 .el-tabs__item.is-active {
-  color: #6366f1 !important;
+  color: #1865F2 !important;
   font-weight: 600;
 }
 .el-tabs__active-bar {
-  background: linear-gradient(90deg, #6366f1, #8b5cf6) !important;
+  background-color: #1865F2 !important;
   border-radius: 2px;
 }
 
-/* === el-progress 颜色 === */
+/* === el-progress === */
 .el-progress-bar__inner {
-  border-radius: 10px !important;
+  border-radius: 8px !important;
 }
 
-/* === 渐变统计卡工具类 === */
-.gradient-card {
+/* === 统计卡片工具类 === */
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
   padding: 20px;
-  border-radius: 16px;
-  color: #fff;
-  position: relative;
-  overflow: hidden;
-  transition: transform 0.3s, box-shadow 0.3s;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #E5E7EB;
+  transition: box-shadow 0.2s;
 }
-.gradient-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.15);
+.stat-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
-.gradient-card .card-emoji {
-  font-size: 32px;
-  margin-bottom: 8px;
+.stat-card .stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
 }
-.gradient-card .card-value {
-  font-size: 28px;
+.stat-card .stat-icon.blue { background: #EBF0FF; color: #1865F2; }
+.stat-card .stat-icon.green { background: #E6F9E8; color: #00A60E; }
+.stat-card .stat-icon.gold { background: #FFF5E0; color: #FFB100; }
+.stat-card .stat-icon.red { background: #FDECEB; color: #D92916; }
+.stat-card .stat-icon.purple { background: #F0EBFF; color: #9059FF; }
+.stat-card .stat-icon.teal { background: #E5FAF5; color: #14BF96; }
+.stat-card .stat-info .stat-value {
+  font-size: 26px;
   font-weight: 700;
+  color: #21242C;
   line-height: 1.2;
 }
-.gradient-card .card-label {
+.stat-card .stat-info .stat-label {
   font-size: 13px;
-  opacity: 0.9;
-  margin-top: 4px;
-}
-.gradient-card.purple { background: linear-gradient(135deg, #6366f1, #8b5cf6); }
-.gradient-card.green  { background: linear-gradient(135deg, #10b981, #34d399); }
-.gradient-card.orange { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
-.gradient-card.pink   { background: linear-gradient(135deg, #ec4899, #f472b6); }
-.gradient-card.blue   { background: linear-gradient(135deg, #3b82f6, #60a5fa); }
-.gradient-card.red    { background: linear-gradient(135deg, #ef4444, #f87171); }
-.gradient-card.teal   { background: linear-gradient(135deg, #14b8a6, #2dd4bf); }
-
-/* 渐变文字工具类 */
-.gradient-text {
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #6B7280;
+  margin-top: 2px;
 }

@@ -1,8 +1,10 @@
 <template>
   <div class="auth-page">
     <div class="auth-card">
-      <div style="text-align: center; margin-bottom: 8px; font-size: 40px">🔑</div>
-      <h2>重置密码</h2>
+      <div class="auth-brand">
+        <div class="brand-mark">G</div>
+        <h2>重置密码</h2>
+      </div>
       <el-form :model="form" @submit.prevent="handleReset">
         <el-form-item>
           <el-input v-model="form.phone" placeholder="手机号" maxlength="11" />
@@ -23,7 +25,7 @@
         </el-form-item>
       </el-form>
       <div style="text-align: center; margin-top: 8px">
-        <router-link to="/login" style="color: #6366f1; text-decoration: none; font-size: 14px">返回登录</router-link>
+        <router-link to="/login" style="color: #1865F2; text-decoration: none; font-size: 14px">返回登录</router-link>
       </div>
     </div>
   </div>
@@ -74,23 +76,38 @@ async function handleReset() {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%);
+  background: #F7F8FA;
 }
 .auth-card {
   width: 420px;
   padding: 40px;
   background: #fff;
-  border-radius: 20px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-  border-top: 4px solid #6366f1;
+  border-radius: 12px;
+  border: 1px solid #E5E7EB;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  border-top: 4px solid #1865F2;
+}
+.auth-brand {
+  text-align: center;
+  margin-bottom: 24px;
+}
+.brand-mark {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: #1865F2;
+  color: #fff;
+  font-size: 24px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 12px;
 }
 .auth-card h2 {
   text-align: center;
-  margin-bottom: 24px;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: #21242C;
   font-size: 22px;
+  margin: 0;
 }
 </style>

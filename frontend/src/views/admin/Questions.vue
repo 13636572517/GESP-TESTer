@@ -7,8 +7,8 @@
       <el-col :span="4" v-for="s in levelStats" :key="s.label">
         <el-card shadow="never" body-style="padding: 12px">
           <div style="text-align: center">
-            <div style="font-size: 22px; font-weight: 700; color: #6366f1">{{ s.count }}</div>
-            <div style="font-size: 12px; color: #909399">{{ s.label }}</div>
+            <div style="font-size: 22px; font-weight: 700; color: #1865F2">{{ s.count }}</div>
+            <div style="font-size: 12px; color: #6B7280">{{ s.label }}</div>
           </div>
         </el-card>
       </el-col>
@@ -136,7 +136,7 @@
       </el-table>
 
       <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px">
-        <span style="font-size: 13px; color: #909399">
+        <span style="font-size: 13px; color: #6B7280">
           共 {{ total }} 题
         </span>
         <el-pagination
@@ -299,10 +299,10 @@
         :on-change="handleCsvFileChange"
         :on-remove="() => csvFile = null"
       >
-        <el-icon :size="40" style="color: #909399"><UploadFilled /></el-icon>
+        <el-icon :size="40" style="color: #6B7280"><UploadFilled /></el-icon>
         <div style="margin-top: 8px">拖拽CSV文件到此处，或 <em>点击上传</em></div>
         <template #tip>
-          <div style="font-size: 12px; color: #909399">仅支持 .csv 文件，编码 UTF-8 或 GBK</div>
+          <div style="font-size: 12px; color: #6B7280">仅支持 .csv 文件，编码 UTF-8 或 GBK</div>
         </template>
       </el-upload>
 
@@ -663,7 +663,7 @@ onMounted(() => {
   line-height: 1.5;
 }
 .question-preview:hover {
-  color: #6366f1;
+  color: #1865F2;
 }
 
 .preview-box {
@@ -692,7 +692,7 @@ onMounted(() => {
   font-size: 14px;
 }
 .preview-option.correct {
-  border-color: #10b981;
+  border-color: #00A60E;
   background: #ecfdf5;
 }
 .opt-key {
@@ -708,7 +708,7 @@ onMounted(() => {
   flex-shrink: 0;
 }
 .preview-option.correct .opt-key {
-  background: #10b981;
+  background: #00A60E;
   color: #fff;
 }
 </style>

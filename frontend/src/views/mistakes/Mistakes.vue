@@ -4,13 +4,12 @@
 
     <el-row :gutter="16" style="margin-bottom: 20px">
       <el-col :span="6">
-        <div class="gradient-card orange" style="cursor: pointer; height: 100%" @click="handleReview">
-          <div style="text-align: center">
-            <div style="font-size: 32px">🔄</div>
-            <div style="margin-top: 8px; font-weight: 600">错题复习</div>
-            <div style="font-size: 13px; opacity: 0.9">自动生成薄弱知识点复习卷</div>
+        <el-card class="review-card" style="cursor: pointer; height: 100%" @click="handleReview">
+          <div style="text-align: center; padding: 12px 0">
+            <div style="font-weight: 600; font-size: 16px; color: #21242C">错题复习</div>
+            <div style="font-size: 13px; color: #6B7280; margin-top: 6px">自动生成薄弱知识点复习卷</div>
           </div>
-        </div>
+        </el-card>
       </el-col>
       <el-col :span="18">
         <el-card>
@@ -40,7 +39,7 @@
         <div style="display: flex; justify-content: space-between; align-items: flex-start">
           <div style="flex: 1">
             <div v-html="item.question?.content?.substring(0, 150)" style="font-size: 15px"></div>
-            <div style="margin-top: 8px; font-size: 13px; color: #909399">
+            <div style="margin-top: 8px; font-size: 13px; color: #6B7280">
               错误 {{ item.wrong_count }} 次 | 连续正确 {{ item.consecutive_correct }} 次
             </div>
           </div>
@@ -105,9 +104,12 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.review-card {
+  border-left: 4px solid #1865F2 !important;
+}
 .mistake-item {
   padding: 16px 0;
-  border-bottom: 1px solid #f0f0ff;
+  border-bottom: 1px solid #E5E7EB;
 }
 .mistake-item:last-child {
   border-bottom: none;

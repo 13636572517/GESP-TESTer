@@ -18,7 +18,7 @@
     <el-card v-if="currentQuestion" style="margin-top: 16px">
       <div class="question-header">
         <el-tag>{{ currentQuestion.type_display }}</el-tag>
-        <span style="margin-left: 8px; color: #909399">第 {{ currentIndex + 1 }} 题</span>
+        <span style="margin-left: 8px; color: #6B7280">第 {{ currentIndex + 1 }} 题</span>
       </div>
 
       <div class="question-content" v-html="currentQuestion.content" v-highlight></div>
@@ -179,7 +179,7 @@ onMounted(() => {
   line-height: 1.8;
   margin-bottom: 20px;
   padding: 16px;
-  background: #f5f3ff;
+  background: #F7F8FA;
   border-radius: 8px;
 }
 .options {
@@ -198,25 +198,25 @@ onMounted(() => {
   transition: all 0.2s;
 }
 .option-item:hover {
-  border-color: #6366f1;
+  border-color: #1865F2;
 }
 .option-item.selected {
-  border-color: #6366f1;
+  border-color: #1865F2;
   background: #eef2ff;
 }
 .option-item.correct {
-  border-color: #10b981;
+  border-color: #00A60E;
   background: #ecfdf5;
 }
 .option-item.wrong {
-  border-color: #ef4444;
+  border-color: #D92916;
   background: #fef2f2;
 }
 .option-key {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: #e0e7ff;
+  background: #EBF0FF;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -253,18 +253,18 @@ onMounted(() => {
   font-size: 14px;
 }
 .nav-item.active {
-  border-color: #6366f1;
-  color: #6366f1;
+  border-color: #1865F2;
+  color: #1865F2;
   font-weight: 600;
 }
 .nav-item.correct {
-  background: #10b981;
+  background: #00A60E;
   color: #fff;
-  border-color: #10b981;
+  border-color: #00A60E;
 }
 .nav-item.wrong {
-  background: #ef4444;
+  background: #D92916;
   color: #fff;
-  border-color: #ef4444;
+  border-color: #D92916;
 }
 </style>

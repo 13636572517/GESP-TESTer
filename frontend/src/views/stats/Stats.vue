@@ -4,11 +4,11 @@
 
     <el-row :gutter="16" style="margin-bottom: 20px">
       <el-col :span="4" v-for="item in statCards" :key="item.label">
-        <div :class="['gradient-card', item.color]">
-          <div style="text-align: center">
-            <div style="font-size: 20px">{{ item.emoji }}</div>
-            <div class="card-value" style="font-size: 22px">{{ item.value }}</div>
-            <div class="card-label">{{ item.label }}</div>
+        <div class="stat-card">
+          <div :class="['stat-icon', item.color]">{{ item.icon }}</div>
+          <div class="stat-info">
+            <div class="stat-value">{{ item.value }}</div>
+            <div class="stat-label">{{ item.label }}</div>
           </div>
         </div>
       </el-col>
@@ -28,7 +28,7 @@
           <div v-for="item in mastery" :key="item.knowledge" style="margin-bottom: 12px">
             <div style="display: flex; justify-content: space-between; margin-bottom: 4px">
               <span style="font-size: 14px">{{ item.knowledge_name }}</span>
-              <span style="font-size: 13px; color: #909399">{{ item.accuracy }}%</span>
+              <span style="font-size: 13px; color: #6B7280">{{ item.accuracy }}%</span>
             </div>
             <el-progress
               :percentage="item.accuracy"
@@ -58,7 +58,7 @@
               <el-tag size="small" type="danger" style="margin-right: 8px">{{ i + 1 }}</el-tag>
               {{ item.knowledge_name }}
             </span>
-            <span style="font-size: 13px; color: #f56c6c">正确率 {{ item.accuracy }}%</span>
+            <span style="font-size: 13px; color: #D92916">正确率 {{ item.accuracy }}%</span>
           </div>
           <el-empty v-if="weakness.length === 0" description="暂无数据" :image-size="60" />
         </el-card>
@@ -78,17 +78,17 @@ const weakness = ref([])
 const masteryLevel = ref(1)
 
 const statCards = computed(() => [
-  { label: '总做题', value: overview.value.total_practice || 0, emoji: '✏️', color: 'purple' },
-  { label: '正确率', value: `${overview.value.accuracy || 0}%`, emoji: '✅', color: 'green' },
-  { label: '总考试', value: overview.value.total_exams || 0, emoji: '📝', color: 'blue' },
-  { label: '学习天数', value: overview.value.study_days || 0, emoji: '📅', color: 'orange' },
-  { label: '学习时长', value: `${overview.value.study_minutes || 0}min`, emoji: '⏱️', color: 'teal' },
-  { label: '待复习', value: overview.value.unmastered_mistakes || 0, emoji: '📚', color: 'pink' },
+  { label: '总做题', value: overview.value.total_practice || 0, icon: '#', color: 'purple' },
+  { label: '正确率', value: `${overview.value.accuracy || 0}%`, icon: '%', color: 'green' },
+  { label: '总考试', value: overview.value.total_exams || 0, icon: 'E', color: 'blue' },
+  { label: '学习天数', value: overview.value.study_days || 0, icon: 'D', color: 'gold' },
+  { label: '学习时长', value: `${overview.value.study_minutes || 0}min`, icon: 'T', color: 'teal' },
+  { label: '待复习', value: overview.value.unmastered_mistakes || 0, icon: 'R', color: 'red' },
 ])
 
 function getMasteryColor(level) {
-  const colors = ['#6b7280', '#ef4444', '#f59e0b', '#6366f1', '#10b981']
-  return colors[level] || '#6b7280'
+  const colors = ['#6B7280', '#D92916', '#FFB100', '#1865F2', '#00A60E']
+  return colors[level] || '#6B7280'
 }
 
 async function loadMastery() {

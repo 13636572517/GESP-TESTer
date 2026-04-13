@@ -12,7 +12,7 @@
                 <el-tag type="info" size="small">{{ tpl.template_type === 1 ? '真题' : '模拟' }}</el-tag>
               </div>
               <h3 style="margin-bottom: 8px">{{ tpl.name }}</h3>
-              <div style="color: #909399; font-size: 14px">
+              <div style="color: #6B7280; font-size: 14px">
                 {{ tpl.question_count }} 题 | {{ tpl.duration }} 分钟 | {{ tpl.total_score }} 分
               </div>
             </el-card>
@@ -28,7 +28,7 @@
             </el-select>
           </el-form-item>
           <el-form-item>
-            <span style="color: #909399; font-size: 13px">15道选择题 + 10道判断题，共25题，60分钟</span>
+            <span style="color: #6B7280; font-size: 13px">15道选择题 + 10道判断题，共25题，60分钟</span>
           </el-form-item>
           <el-form-item>
             <el-button type="primary" @click="handleRandomExam">开始随机模考</el-button>
@@ -42,7 +42,7 @@
           <el-table-column prop="level_name" label="级别" width="100" />
           <el-table-column label="得分" width="120">
             <template #default="{ row }">
-              <span :style="{ color: row.earned_score >= (row.total_score * 0.6) ? '#10b981' : '#ef4444', fontWeight: 600 }">
+              <span :style="{ color: row.earned_score >= (row.total_score * 0.6) ? '#00A60E' : '#D92916', fontWeight: 600 }">
                 {{ row.earned_score }} / {{ row.total_score }}
               </span>
             </template>

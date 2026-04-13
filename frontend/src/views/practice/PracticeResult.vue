@@ -8,11 +8,11 @@
       <el-col :span="8">
         <el-card>
           <div style="text-align: center">
-            <div class="gradient-text" style="font-size: 56px; font-weight: 700">{{ result.accuracy }}%</div>
+            <div style="font-size: 56px; font-weight: 700; color: #21242C">{{ result.accuracy }}%</div>
             <div class="stat-label">正确率</div>
-            <div v-if="result.accuracy >= 80" style="color: #10b981; margin-top: 8px; font-weight: 500">🎉 太棒了！继续保持！</div>
-            <div v-else-if="result.accuracy >= 60" style="color: #f59e0b; margin-top: 8px; font-weight: 500">💪 不错，再接再厉！</div>
-            <div v-else style="color: #ef4444; margin-top: 8px; font-weight: 500">📚 加油！多多练习！</div>
+            <div v-if="result.accuracy >= 80" style="color: #00A60E; margin-top: 8px; font-weight: 500">太棒了！继续保持！</div>
+            <div v-else-if="result.accuracy >= 60" style="color: #FFB100; margin-top: 8px; font-weight: 500">不错，再接再厉！</div>
+            <div v-else style="color: #D92916; margin-top: 8px; font-weight: 500">加油！多多练习！</div>
             <div style="margin-top: 12px; color: #606266">
               {{ result.correct_count }} / {{ result.total_count }} 题
             </div>
@@ -22,7 +22,7 @@
       <el-col :span="16">
         <el-card>
           <template #header>答题详情</template>
-          <div v-for="(answer, i) in result.answers || []" :key="answer.id" style="padding: 12px 0; border-bottom: 1px solid #f0f0ff">
+          <div v-for="(answer, i) in result.answers || []" :key="answer.id" style="padding: 12px 0; border-bottom: 1px solid #E5E7EB">
             <div style="display: flex; justify-content: space-between; align-items: center">
               <span>第 {{ i + 1 }} 题</span>
               <el-tag :type="answer.is_correct ? 'success' : 'danger'" size="small">
@@ -30,7 +30,7 @@
               </el-tag>
             </div>
             <div style="font-size: 14px; color: #606266; margin-top: 4px" v-html="answer.question?.content?.substring(0, 100)" v-highlight></div>
-            <div v-if="!answer.is_correct" style="font-size: 13px; color: #f56c6c; margin-top: 4px">
+            <div v-if="!answer.is_correct" style="font-size: 13px; color: #D92916; margin-top: 4px">
               你的答案: {{ answer.user_answer }} | 正确答案: {{ answer.question?.answer }}
             </div>
           </div>
