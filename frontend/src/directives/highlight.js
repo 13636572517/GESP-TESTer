@@ -1,8 +1,48 @@
 import hljs from 'highlight.js/lib/core'
 import cpp from 'highlight.js/lib/languages/cpp'
 import 'highlight.js/styles/github.css'
+import katex from 'katex'
+import 'katex/dist/katex.min.css'
 
 hljs.registerLanguage('cpp', cpp)
+
+/**
+ * Unescape HTML entities inside LaTeX math blocks.
+ * KaTeX needs literal characters, not HTML-escaped ones.
+ */
+function unescapeHtmlInTex(tex) {
+  return tex
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+}
+
+/**
+ * Render LaTeX math expressions using KaTeX:
+ *   $$...$$ → display (block) math
+ *   $...$ → inline math
+ */
+function processMath(html) {
+  // Display math: $$...$$
+  html = html.replace(/\$\$([\s\S]*?)\$\$/g, (_, tex) => {
+    try {
+      return katex.renderToString(unescapeHtmlInTex(tex.trim()), { displayMode: true, throwOnError: false })
+    } catch {
+      return _
+    }
+  })
+  // Inline math: $...$  (not preceded/followed by another $)
+  html = html.replace(/\$([^\$\n]+?)\$/g, (_, tex) => {
+    try {
+      return katex.renderToString(unescapeHtmlInTex(tex.trim()), { displayMode: false, throwOnError: false })
+    } catch {
+      return _
+    }
+  })
+  return html
+}
 
 /**
  * Convert markdown-style backtick code to HTML:
@@ -25,14 +65,20 @@ function processBackticks(html) {
 }
 
 function processElement(el) {
-  // Step 1: Convert backtick syntax in text nodes
+  // Step 1: Render LaTeX math expressions
+  const afterMath = processMath(el.innerHTML)
+  if (afterMath !== el.innerHTML) {
+    el.innerHTML = afterMath
+  }
+
+  // Step 2: Convert backtick syntax in text nodes
   const original = el.innerHTML
   const processed = processBackticks(original)
   if (processed !== original) {
     el.innerHTML = processed
   }
 
-  // Step 2: Highlight <pre> blocks
+  // Step 3: Highlight <pre> blocks
   el.querySelectorAll('pre').forEach(block => {
     if (block.dataset.highlighted) return
     // If no <code> child, wrap content in one
