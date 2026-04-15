@@ -23,18 +23,22 @@
             <span style="font-weight: 600">快捷入口</span>
           </template>
           <div class="quick-links">
-            <el-button type="primary" size="large" @click="$router.push('/practice')">
-              <el-icon><EditPen /></el-icon> 开始练习
-            </el-button>
-            <el-button type="success" size="large" @click="$router.push('/exam')">
-              <el-icon><Timer /></el-icon> 模拟考试
-            </el-button>
-            <el-button type="warning" size="large" @click="$router.push('/mistakes')">
-              <el-icon><Warning /></el-icon> 错题复习
-            </el-button>
-            <el-button size="large" @click="$router.push('/knowledge')">
-              <el-icon><Collection /></el-icon> 知识点
-            </el-button>
+            <div class="quick-link-item blue" @click="$router.push('/practice')">
+              <el-icon :size="18"><EditPen /></el-icon>
+              <span>开始练习</span>
+            </div>
+            <div class="quick-link-item teal" @click="$router.push('/exam')">
+              <el-icon :size="18"><Timer /></el-icon>
+              <span>模拟考试</span>
+            </div>
+            <div class="quick-link-item amber" @click="$router.push('/mistakes')">
+              <el-icon :size="18"><Warning /></el-icon>
+              <span>错题复习</span>
+            </div>
+            <div class="quick-link-item slate" @click="$router.push('/knowledge')">
+              <el-icon :size="18"><Collection /></el-icon>
+              <span>知识点</span>
+            </div>
           </div>
         </el-card>
       </el-col>
@@ -86,11 +90,31 @@ onMounted(async () => {
 .quick-links {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 10px;
 }
-.quick-links .el-button {
-  width: 100%;
-  height: 48px;
+.quick-link-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: 52px;
+  border-radius: 8px;
   font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: filter 0.15s, transform 0.1s;
+  user-select: none;
 }
+.quick-link-item:hover {
+  filter: brightness(0.95);
+  transform: translateY(-1px);
+}
+.quick-link-item:active {
+  transform: translateY(0);
+  filter: brightness(0.9);
+}
+.quick-link-item.blue  { background: #EBF4FF; color: #2563EB; }
+.quick-link-item.teal  { background: #E6FAF5; color: #0D9488; }
+.quick-link-item.amber { background: #FEF9EC; color: #D97706; }
+.quick-link-item.slate { background: #F1F5F9; color: #475569; }
 </style>

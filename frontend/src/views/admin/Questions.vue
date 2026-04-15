@@ -126,11 +126,13 @@
         </el-table-column>
         <el-table-column prop="answer" label="答案" width="70" />
         <el-table-column prop="source" label="来源" width="120" show-overflow-tooltip />
-        <el-table-column label="操作" width="140" fixed="right">
+        <el-table-column label="操作" width="176" fixed="right">
           <template #default="{ row }">
-            <el-button link type="primary" size="small" @click="showPreviewDialog(row)">预览</el-button>
-            <el-button link type="primary" size="small" @click="showEditDialog(row)">编辑</el-button>
-            <el-button link type="danger" size="small" @click="handleDelete(row.id)">删除</el-button>
+            <div style="display: flex; gap: 4px; flex-wrap: nowrap">
+              <el-button class="op-btn op-preview" size="small" @click="showPreviewDialog(row)">预览</el-button>
+              <el-button class="op-btn op-edit" size="small" @click="showEditDialog(row)">编辑</el-button>
+              <el-button class="op-btn op-delete" size="small" @click="handleDelete(row.id)">删除</el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -656,6 +658,45 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* 操作列按钮 */
+.op-btn {
+  padding: 2px 8px !important;
+  height: 24px !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  border-radius: 4px !important;
+}
+.op-preview {
+  color: #475569 !important;
+  background: #F1F5F9 !important;
+  border-color: #CBD5E1 !important;
+}
+.op-preview:hover {
+  color: #1E293B !important;
+  background: #E2E8F0 !important;
+  border-color: #94A3B8 !important;
+}
+.op-edit {
+  color: #1865F2 !important;
+  background: #EBF0FF !important;
+  border-color: #B8D1FB !important;
+}
+.op-edit:hover {
+  color: #1551C9 !important;
+  background: #D6E4FF !important;
+  border-color: #1865F2 !important;
+}
+.op-delete {
+  color: #C0392B !important;
+  background: #FEF2F2 !important;
+  border-color: #FECACA !important;
+}
+.op-delete:hover {
+  color: #991B1B !important;
+  background: #FEE2E2 !important;
+  border-color: #F87171 !important;
+}
+
 .question-preview {
   cursor: pointer;
   font-size: 13px;

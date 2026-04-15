@@ -49,7 +49,7 @@
             </el-tag>
             <el-button
               v-if="!item.is_mastered"
-              link type="success" size="small"
+              class="btn-mastered" size="small"
               @click="handleMastered(item.id)"
             >
               标记掌握
@@ -113,5 +113,19 @@ onMounted(async () => {
 }
 .mistake-item:last-child {
   border-bottom: none;
+}
+.btn-mastered {
+  color: #0D9488 !important;
+  background: #E6FAF5 !important;
+  border-color: #99E6D8 !important;
+  font-size: 12px !important;
+  padding: 4px 10px !important;
+  height: 26px !important;
+  font-weight: 500 !important;
+}
+.btn-mastered:hover {
+  color: #0A7A6E !important;
+  background: #CCFAF0 !important;
+  border-color: #0D9488 !important;
 }
 </style>
