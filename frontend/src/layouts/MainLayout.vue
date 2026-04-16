@@ -45,8 +45,11 @@
             <span>管理</span>
           </template>
           <el-menu-item index="/admin/questions">题目管理</el-menu-item>
+          <el-menu-item index="/admin/pdf-import">PDF导入题目</el-menu-item>
           <el-menu-item index="/admin/knowledge">知识点管理</el-menu-item>
           <el-menu-item index="/admin/exam-templates">试卷管理</el-menu-item>
+          <el-menu-item index="/admin/members">会员管理</el-menu-item>
+          <el-menu-item index="/admin/classes">班级管理</el-menu-item>
         </el-sub-menu>
       </el-menu>
     </el-aside>

@@ -104,43 +104,54 @@
 }
 
 /* === 统计卡片工具类 === */
+/* 统计卡片网格 */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 16px;
+}
 .stat-card {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 16px;
-  padding: 20px;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px 12px;
   background: #fff;
   border-radius: 12px;
   border: 1px solid #E5E7EB;
   transition: box-shadow 0.2s;
+  min-height: 120px;
 }
 .stat-card:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 .stat-card .stat-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
+  font-size: 20px;
+  font-weight: 700;
   flex-shrink: 0;
 }
-.stat-card .stat-icon.blue { background: #EBF0FF; color: #1865F2; }
-.stat-card .stat-icon.green { background: #E6F9E8; color: #00A60E; }
-.stat-card .stat-icon.gold { background: #FFF5E0; color: #FFB100; }
-.stat-card .stat-icon.red { background: #FDECEB; color: #D92916; }
+.stat-card .stat-icon.blue   { background: #EBF0FF; color: #1865F2; }
+.stat-card .stat-icon.green  { background: #E6F9E8; color: #00A60E; }
+.stat-card .stat-icon.gold   { background: #FFF5E0; color: #FFB100; }
+.stat-card .stat-icon.red    { background: #FDECEB; color: #D92916; }
 .stat-card .stat-icon.purple { background: #F0EBFF; color: #9059FF; }
-.stat-card .stat-icon.teal { background: #E5FAF5; color: #14BF96; }
-.stat-card .stat-info .stat-value {
+.stat-card .stat-icon.teal   { background: #E5FAF5; color: #14BF96; }
+.stat-card .stat-value {
   font-size: 26px;
   font-weight: 700;
   color: #21242C;
-  line-height: 1.2;
+  line-height: 1;
+  white-space: nowrap;
 }
-.stat-card .stat-info .stat-label {
+.stat-card .stat-label {
   font-size: 13px;
   color: #6B7280;
-  margin-top: 2px;
+  white-space: nowrap;
 }

@@ -2,17 +2,13 @@
   <div class="page-container">
     <h1 class="page-title">学习统计</h1>
 
-    <el-row :gutter="16" style="margin-bottom: 20px">
-      <el-col :span="4" v-for="item in statCards" :key="item.label">
-        <div class="stat-card">
-          <div :class="['stat-icon', item.color]">{{ item.icon }}</div>
-          <div class="stat-info">
-            <div class="stat-value">{{ item.value }}</div>
-            <div class="stat-label">{{ item.label }}</div>
-          </div>
-        </div>
-      </el-col>
-    </el-row>
+    <div class="stat-grid" style="margin-bottom: 20px">
+      <div class="stat-card" v-for="item in statCards" :key="item.label">
+        <div :class="['stat-icon', item.color]">{{ item.icon }}</div>
+        <div class="stat-value">{{ item.value }}</div>
+        <div class="stat-label">{{ item.label }}</div>
+      </div>
+    </div>
 
     <el-row :gutter="16">
       <el-col :span="12">

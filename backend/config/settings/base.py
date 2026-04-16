@@ -1,8 +1,12 @@
 import os
 from pathlib import Path
 from datetime import timedelta
+from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
+
+# Load .env from backend directory
+load_dotenv(BASE_DIR / '.env')
 
 SECRET_KEY = os.environ.get(
     'DJANGO_SECRET_KEY',
@@ -103,6 +107,13 @@ ALIYUN_SMS = {
     'SIGN_NAME': os.environ.get('ALIYUN_SMS_SIGN', 'GESP训练'),
     'TEMPLATE_CODE': os.environ.get('ALIYUN_SMS_TEMPLATE', ''),
 }
+
+# DashScope (Qwen-VL) for PDF question extraction
+DASHSCOPE_API_KEY = os.environ.get('DASHSCOPE_API_KEY', '')
+
+# 允许上传最大 50MB 的 PDF
+DATA_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024
+FILE_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024
 
 # SMS code expiry (minutes)
 SMS_CODE_EXPIRY = 5

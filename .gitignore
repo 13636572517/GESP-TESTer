@@ -36,3 +36,6 @@ token.json
 
 # Claude
 .claude/
+
+# DB backups (contain user data)
+scripts/backups/

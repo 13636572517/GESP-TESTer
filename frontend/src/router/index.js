@@ -99,6 +99,24 @@ const routes = [
         component: () => import('../views/admin/ExamTemplates.vue'),
         meta: { admin: true },
       },
+      {
+        path: 'admin/pdf-import',
+        name: 'AdminPdfImport',
+        component: () => import('../views/admin/PdfImport.vue'),
+        meta: { admin: true },
+      },
+      {
+        path: 'admin/members',
+        name: 'AdminMembers',
+        component: () => import('../views/admin/Members.vue'),
+        meta: { admin: true },
+      },
+      {
+        path: 'admin/classes',
+        name: 'AdminClasses',
+        component: () => import('../views/admin/Classes.vue'),
+        meta: { admin: true },
+      },
     ],
   },
   {

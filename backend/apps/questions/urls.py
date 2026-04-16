@@ -9,4 +9,6 @@ urlpatterns = [
     path('admin/questions/export/', views.export_questions, name='question-export'),
     path('admin/questions/csv-template/', views.download_csv_template, name='question-csv-template'),
     path('admin/questions/batch-delete/', views.batch_delete_questions, name='question-batch-delete'),
+    path('admin/questions/pdf-extract/', views.pdf_extract, name='question-pdf-extract'),
+    path('admin/questions/pdf-import/', views.pdf_import_confirm, name='question-pdf-import'),
 ]

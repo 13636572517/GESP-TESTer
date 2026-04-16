@@ -18,26 +18,30 @@
     <el-card style="margin-bottom: 16px">
       <el-form :inline="true" :model="filters">
         <el-form-item label="级别">
-          <el-select v-model="filters.level" clearable placeholder="全部" style="width: 100px">
+          <el-select v-model="filters.level" clearable placeholder="全部" style="width: 100px"
+            @change="handleSearch" @clear="handleSearch">
             <el-option v-for="i in 8" :key="i" :label="`${i}级`" :value="i" />
           </el-select>
         </el-form-item>
         <el-form-item label="题型">
-          <el-select v-model="filters.type" clearable placeholder="全部" style="width: 100px">
+          <el-select v-model="filters.type" clearable placeholder="全部" style="width: 100px"
+            @change="handleSearch" @clear="handleSearch">
             <el-option label="单选题" :value="1" />
             <el-option label="多选题" :value="2" />
             <el-option label="判断题" :value="3" />
           </el-select>
         </el-form-item>
         <el-form-item label="难度">
-          <el-select v-model="filters.difficulty" clearable placeholder="全部" style="width: 100px">
+          <el-select v-model="filters.difficulty" clearable placeholder="全部" style="width: 100px"
+            @change="handleSearch" @clear="handleSearch">
             <el-option label="简单" :value="1" />
             <el-option label="中等" :value="2" />
             <el-option label="困难" :value="3" />
           </el-select>
         </el-form-item>
         <el-form-item label="搜索">
-          <el-input v-model="filters.search" clearable placeholder="题目内容关键词" style="width: 180px" @keyup.enter="loadQuestions" />
+          <el-input v-model="filters.search" clearable placeholder="题目内容关键词" style="width: 180px"
+            @keyup.enter="handleSearch" @clear="handleSearch" />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleSearch">

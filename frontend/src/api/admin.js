@@ -37,6 +37,33 @@ export const getExamTemplates = (params) => request.get('/admin/exam-templates/'
 export const createExamTemplate = (data) => request.post('/admin/exam-templates/', data)
 export const updateExamTemplate = (id, data) => request.put(`/admin/exam-templates/${id}/`, data)
 
+// PDF 题目提取 —— 用独立 axios 实例，避免全局 15s 超时 + 拦截器重复弹窗
+export function pdfExtract(formData) {
+  const userStore = useUserStore()
+  return axios.post('/api/admin/questions/pdf-extract/', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+      ...(userStore.token ? { Authorization: `Bearer ${userStore.token}` } : {}),
+    },
+    timeout: 300000, // 5 分钟，大 PDF 多页识别需要足够长
+  }).then(res => res.data)
+}
+export const pdfImportConfirm = (questions) => request.post('/admin/questions/pdf-import/', { questions })
+
+// 会员管理
+export const getAdminUsers = (params) => request.get('/admin/users/', { params })
+export const updateAdminUser = (id, data) => request.put(`/admin/users/${id}/`, data)
+export const deleteAdminUser = (id) => request.delete(`/admin/users/${id}/`)
+
+// 班级管理
+export const getClassrooms = (params) => request.get('/admin/classes/', { params })
+export const createClassroom = (data) => request.post('/admin/classes/', data)
+export const updateClassroom = (id, data) => request.put(`/admin/classes/${id}/`, data)
+export const deleteClassroom = (id) => request.delete(`/admin/classes/${id}/`)
+export const getClassroomMembers = (id) => request.get(`/admin/classes/${id}/members/`)
+export const addClassroomMember = (id, data) => request.post(`/admin/classes/${id}/members/`, data)
+export const removeClassroomMember = (classId, memberId) => request.delete(`/admin/classes/${classId}/members/${memberId}/`)
+
 // 知识点内容编辑
 export const updateKnowledgeContent = (id, data) => request.post(`/admin/knowledge/${id}/content/`, data)
 

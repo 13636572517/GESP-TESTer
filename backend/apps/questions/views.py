@@ -295,3 +295,67 @@ def batch_delete_questions(request):
     return Response({
         'deleted_count': deleted_count,
     })
+
+
+# ── PDF 题目提取 ──────────────────────────────────────────────
+
+@api_view(['POST'])
+@permission_classes([AdminPermission])
+def pdf_extract(request):
+    """
+    上传 PDF → 调用 Qwen-VL 提取题目 → 返回预览 JSON（不写入数据库）
+    form-data: file=<pdf>, level=<1-8>, source=<来源描述>
+    """
+    from .pdf_import import extract_from_pdf
+
+    pdf_file = request.FILES.get('file')
+    if not pdf_file:
+        return Response({'detail': '请上传PDF文件'}, status=400)
+    if not pdf_file.name.lower().endswith('.pdf'):
+        return Response({'detail': '仅支持PDF格式'}, status=400)
+
+    level_raw = request.data.get('level', '1')
+    try:
+        level = int(level_raw)
+        if not 1 <= level <= 8:
+            raise ValueError
+    except (ValueError, TypeError):
+        return Response({'detail': '级别必须为1-8之间的整数'}, status=400)
+
+    source = request.data.get('source', '').strip() or f'PDF导入'
+
+    try:
+        pdf_bytes = pdf_file.read()
+        result = extract_from_pdf(pdf_bytes, level, source)
+        return Response(result)
+    except ValueError as e:
+        return Response({'detail': str(e)}, status=400)
+    except Exception as e:
+        return Response({'detail': f'提取失败: {str(e)}'}, status=500)
+
+
+@api_view(['POST'])
+@permission_classes([AdminPermission])
+def pdf_import_confirm(request):
+    """
+    将预览确认后的题目批量写入数据库
+    body: { questions: [...] }  格式同 batch_create_questions
+    """
+    questions_data = request.data.get('questions', [])
+    if not questions_data:
+        return Response({'detail': '题目列表不能为空'}, status=400)
+
+    created, errors = [], []
+    for i, q_data in enumerate(questions_data):
+        serializer = QuestionCreateSerializer(data=q_data, context={'request': request})
+        if serializer.is_valid():
+            instance = serializer.save()
+            created.append(instance.id)
+        else:
+            errors.append({'index': i, 'errors': serializer.errors})
+
+    return Response({
+        'created_count': len(created),
+        'error_count': len(errors),
+        'errors': errors,
+    })

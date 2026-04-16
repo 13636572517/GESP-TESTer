@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from apps.knowledge.models import GespLevel
 
 
 class UserProfile(models.Model):
@@ -38,3 +39,39 @@ class SmsCode(models.Model):
         db_table = 'sms_code'
         verbose_name = '短信验证码'
         verbose_name_plural = verbose_name
+
+
+class Classroom(models.Model):
+    name = models.CharField('班级名称', max_length=100)
+    description = models.CharField('描述', max_length=300, blank=True, default='')
+    level = models.ForeignKey(GespLevel, on_delete=models.SET_NULL, null=True, blank=True,
+                               related_name='classrooms', verbose_name='对应级别')
+    is_active = models.BooleanField('是否启用', default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'classroom'
+        verbose_name = '班级'
+        verbose_name_plural = verbose_name
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def member_count(self):
+        return self.members.count()
+
+
+class ClassroomMember(models.Model):
+    classroom = models.ForeignKey(Classroom, on_delete=models.CASCADE, related_name='members', verbose_name='班级')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='classrooms', verbose_name='学员')
+    note = models.CharField('备注', max_length=200, blank=True, default='')
+    joined_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'classroom_member'
+        verbose_name = '班级成员'
+        verbose_name_plural = verbose_name
+        unique_together = [('classroom', 'user')]
+        ordering = ['joined_at']
