@@ -6,7 +6,23 @@
         <h2>GESP考试训练平台</h2>
       </div>
       <el-tabs v-model="loginType">
-        <el-tab-pane label="密码登录" name="password">
+        <el-tab-pane label="账号登录" name="username">
+          <el-form :model="usernameForm" @submit.prevent="handleUsernameLogin">
+            <el-form-item>
+              <el-input v-model="usernameForm.username" placeholder="用户名" :prefix-icon="User" clearable />
+            </el-form-item>
+            <el-form-item>
+              <el-input v-model="usernameForm.password" type="password" placeholder="密码" :prefix-icon="Lock" show-password />
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" native-type="submit" :loading="loading" style="width: 100%; height: 44px; font-size: 16px">登录</el-button>
+            </el-form-item>
+          </el-form>
+          <div style="text-align: center; font-size: 13px; color: #9CA3AF; margin-top: -4px">
+            账号由管理员创建，如需账号请联系管理员
+          </div>
+        </el-tab-pane>
+        <el-tab-pane label="手机号登录" name="password">
           <el-form :model="form" @submit.prevent="handleLogin">
             <el-form-item>
               <el-input v-model="form.phone" placeholder="手机号" :prefix-icon="Phone" maxlength="11" />
@@ -18,6 +34,10 @@
               <el-button type="primary" native-type="submit" :loading="loading" style="width: 100%; height: 44px; font-size: 16px">登录</el-button>
             </el-form-item>
           </el-form>
+          <div class="auth-links">
+            <router-link to="/register">注册账号</router-link>
+            <router-link to="/reset-password">忘记密码</router-link>
+          </div>
         </el-tab-pane>
         <el-tab-pane label="验证码登录" name="sms">
           <el-form :model="smsForm" @submit.prevent="handleSmsLogin">
@@ -38,10 +58,6 @@
           </el-form>
         </el-tab-pane>
       </el-tabs>
-      <div class="auth-links">
-        <router-link to="/register">注册账号</router-link>
-        <router-link to="/reset-password">忘记密码</router-link>
-      </div>
     </div>
   </div>
 </template>
@@ -49,19 +65,35 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { Phone, Lock } from '@element-plus/icons-vue'
+import { Phone, Lock, User } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '../../stores/user'
-import { loginByPassword, loginBySms, sendSms } from '../../api/auth'
+import { loginByPassword, loginBySms, loginByUsername, sendSms } from '../../api/auth'
 
 const router = useRouter()
 const userStore = useUserStore()
 const loading = ref(false)
-const loginType = ref('password')
+const loginType = ref('username')
 const countdown = ref(0)
 
+const usernameForm = ref({ username: '', password: '' })
 const form = ref({ phone: '', password: '' })
 const smsForm = ref({ phone: '', code: '' })
+
+async function handleUsernameLogin() {
+  if (!usernameForm.value.username || !usernameForm.value.password) {
+    return ElMessage.warning('请填写用户名和密码')
+  }
+  loading.value = true
+  try {
+    const data = await loginByUsername(usernameForm.value)
+    userStore.setTokens(data.access, data.refresh)
+    ElMessage.success('登录成功')
+    router.push('/')
+  } finally {
+    loading.value = false
+  }
+}
 
 async function handleLogin() {
   if (!form.value.phone || !form.value.password) {

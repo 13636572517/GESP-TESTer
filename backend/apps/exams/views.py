@@ -76,11 +76,17 @@ def start_exam(request):
         JUDGE_COUNT = 10
         DURATION = 60
 
+        # question_source: 1=真题库, 2=AI题库, 不传=全部
+        question_source = request.data.get('question_source')
+        base_filter = {'level_id': level_id, 'is_active': True}
+        if question_source:
+            base_filter['source_type'] = int(question_source)
+
         choice_ids = list(Question.objects.filter(
-            level_id=level_id, is_active=True, question_type=1
+            **base_filter, question_type=1
         ).values_list('id', flat=True))
         judge_ids = list(Question.objects.filter(
-            level_id=level_id, is_active=True, question_type=3
+            **base_filter, question_type=3
         ).values_list('id', flat=True))
 
         if not choice_ids and not judge_ids:

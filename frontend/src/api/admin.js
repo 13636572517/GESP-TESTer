@@ -36,6 +36,8 @@ export const downloadCsvTemplate = () => authBlobGet('/admin/questions/csv-templ
 export const getExamTemplates = (params) => request.get('/admin/exam-templates/', { params })
 export const createExamTemplate = (data) => request.post('/admin/exam-templates/', data)
 export const updateExamTemplate = (id, data) => request.put(`/admin/exam-templates/${id}/`, data)
+export const patchExamTemplate = (id, data) => request.patch(`/admin/exam-templates/${id}/`, data)
+export const deleteExamTemplate = (id) => request.delete(`/admin/exam-templates/${id}/`)
 
 // PDF 题目提取 —— 用独立 axios 实例，避免全局 15s 超时 + 拦截器重复弹窗
 export function pdfExtract(formData) {
@@ -52,6 +54,7 @@ export const pdfImportConfirm = (questions) => request.post('/admin/questions/pd
 
 // 会员管理
 export const getAdminUsers = (params) => request.get('/admin/users/', { params })
+export const createAdminUser = (data) => request.post('/admin/users/', data)
 export const updateAdminUser = (id, data) => request.put(`/admin/users/${id}/`, data)
 export const deleteAdminUser = (id) => request.delete(`/admin/users/${id}/`)
 
@@ -63,6 +66,18 @@ export const deleteClassroom = (id) => request.delete(`/admin/classes/${id}/`)
 export const getClassroomMembers = (id) => request.get(`/admin/classes/${id}/members/`)
 export const addClassroomMember = (id, data) => request.post(`/admin/classes/${id}/members/`, data)
 export const removeClassroomMember = (classId, memberId) => request.delete(`/admin/classes/${classId}/members/${memberId}/`)
+
+// AI 功能
+// 单题标注：60s 超时，避免多题批量时 15s 全局超时导致网络错误
+export const aiSuggestTagOne      = (questionId)  => request.post('/admin/questions/ai-suggest-tags/', { question_ids: [questionId] }, { timeout: 60000 })
+export const aiConfirmTags        = (items)       => request.post('/admin/questions/ai-confirm-tags/', items)
+export const aiGenerateQuestions  = (data)        => request.post('/admin/questions/ai-generate/', data, { timeout: 120000 })
+
+// AI 配置与统计
+export const getAIConfig      = ()      => request.get('/admin/ai-config/')
+export const saveAIConfig     = (data)  => request.put('/admin/ai-config/', data)
+export const testAIModel      = (model) => request.post('/admin/ai-config/test/', { model }, { timeout: 60000 })
+export const getAIUsageStats  = (days)  => request.get('/admin/ai-usage/', { params: { days } })
 
 // 知识点内容编辑
 export const updateKnowledgeContent = (id, data) => request.post(`/admin/knowledge/${id}/content/`, data)

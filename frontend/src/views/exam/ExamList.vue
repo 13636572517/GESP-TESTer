@@ -23,9 +23,16 @@
         <el-divider>或者随机组卷</el-divider>
         <el-form :inline="true" :model="randomForm">
           <el-form-item label="级别">
-            <el-select v-model="randomForm.level_id" placeholder="选择级别" style="width: 220px">
+            <el-select v-model="randomForm.level_id" placeholder="选择级别" style="width: 180px">
               <el-option v-for="l in levels" :key="l.id" :label="l.name" :value="l.id" />
             </el-select>
+          </el-form-item>
+          <el-form-item label="题库">
+            <el-radio-group v-model="randomForm.question_source">
+              <el-radio-button :value="0">全部</el-radio-button>
+              <el-radio-button :value="1">真题库</el-radio-button>
+              <el-radio-button :value="2">AI题库</el-radio-button>
+            </el-radio-group>
           </el-form-item>
           <el-form-item>
             <span style="color: #6B7280; font-size: 13px">15道选择题 + 10道判断题，共25题，60分钟</span>
@@ -81,6 +88,7 @@ const levels = ref([])
 
 const randomForm = ref({
   level_id: 1,
+  question_source: 0,   // 0=全部, 1=真题库, 2=AI题库
 })
 
 async function handleStartExam(tpl) {
@@ -97,10 +105,11 @@ async function handleStartExam(tpl) {
 }
 
 async function handleRandomExam() {
-  const data = await startExam({
-    level_id: randomForm.value.level_id,
-    exam_type: 2,
-  })
+  const payload = { level_id: randomForm.value.level_id, exam_type: 2 }
+  if (randomForm.value.question_source !== 0) {
+    payload.question_source = randomForm.value.question_source
+  }
+  const data = await startExam(payload)
   router.push(`/exam/${data.record_id}/session`)
 }
 

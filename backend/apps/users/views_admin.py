@@ -18,10 +18,35 @@ class AdminPermission(IsAuthenticated):
 
 # ── 会员管理 ──────────────────────────────────────────────────
 
-@api_view(['GET'])
+@api_view(['GET', 'POST'])
 @permission_classes([AdminPermission])
 def user_list(request):
-    """获取所有用户列表，支持搜索和筛选"""
+    """获取所有用户列表 / 管理员创建账号"""
+    if request.method == 'POST':
+        username = request.data.get('username', '').strip()
+        password = request.data.get('password', '').strip()
+        nickname = request.data.get('nickname', '').strip()
+        current_level = int(request.data.get('current_level', 1))
+        is_admin_flag = bool(request.data.get('is_admin', False))
+
+        if not username:
+            return Response({'detail': '用户名不能为空'}, status=400)
+        if len(password) < 6:
+            return Response({'detail': '密码至少6位'}, status=400)
+        if User.objects.filter(username=username).exists():
+            return Response({'detail': f'用户名「{username}」已存在'}, status=400)
+
+        user = User.objects.create_user(username=username, password=password)
+        UserProfile.objects.create(
+            user=user,
+            phone=None,
+            nickname=nickname or username,
+            current_level=current_level,
+            is_admin=is_admin_flag,
+        )
+        serializer = AdminUserSerializer(user, context={'request': request})
+        return Response(serializer.data, status=201)
+
     qs = User.objects.select_related('profile').prefetch_related('classrooms__classroom').order_by('-profile__created_at')
 
     search = request.query_params.get('search', '').strip()
@@ -63,7 +88,7 @@ def user_detail(request, pk):
         user.delete()
         return Response(status=204)
 
-    # PUT: update profile fields
+    # PUT: update profile fields + optional password reset
     profile = user.profile
     data = request.data
     if 'nickname' in data:
@@ -77,6 +102,13 @@ def user_detail(request, pk):
             return Response({'detail': '不能取消自己的管理员权限'}, status=400)
         profile.is_admin = bool(data['is_admin'])
     profile.save()
+    # 可选：重置密码
+    new_password = data.get('new_password', '').strip()
+    if new_password:
+        if len(new_password) < 6:
+            return Response({'detail': '密码至少6位'}, status=400)
+        user.set_password(new_password)
+        user.save()
 
     serializer = AdminUserSerializer(user, context={'request': request})
     return Response(serializer.data)

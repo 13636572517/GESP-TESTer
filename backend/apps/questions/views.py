@@ -3,14 +3,26 @@ import io
 import json
 import re
 from html import escape as html_escape
+from django.db.models import Sum, Count, Avg, Q
+from django.db.models.functions import TruncDate
 from django.http import HttpResponse
+from django.utils import timezone
+from datetime import timedelta
 from rest_framework import generics, status, filters
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.parsers import MultiPartParser, FormParser
 from .models import Question
-from .serializers import QuestionSerializer, QuestionCreateSerializer
+from .serializers import QuestionSerializer, QuestionCreateSerializer, QuestionForExamSerializer
+
+
+class AdminQuestionPagination(PageNumberPagination):
+    """管理端题目分页：允许客户端通过 page_size 参数控制每页数量"""
+    page_size = 20
+    page_size_query_param = 'page_size'
+    max_page_size = 5000
 
 
 def convert_code_markers(text):
@@ -48,6 +60,7 @@ class AdminPermission(IsAuthenticated):
 
 class QuestionListCreateView(generics.ListCreateAPIView):
     permission_classes = [AdminPermission]
+    pagination_class = AdminQuestionPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['content']
     ordering_fields = ['created_at', 'difficulty']
@@ -56,15 +69,27 @@ class QuestionListCreateView(generics.ListCreateAPIView):
     def get_serializer_class(self):
         if self.request.method == 'POST':
             return QuestionCreateSerializer
+        if self.request.query_params.get('for_exam'):
+            return QuestionForExamSerializer
         return QuestionSerializer
 
     def get_queryset(self):
-        qs = Question.objects.select_related('level').all()
-        level = self.request.query_params.get('level')
-        qtype = self.request.query_params.get('type')
+        for_exam = self.request.query_params.get('for_exam')
+        if for_exam:
+            # 组卷模式：只查必要字段，过滤禁用题，命中 (level_id, is_active) 索引
+            qs = Question.objects.filter(is_active=True).only(
+                'id', 'question_type', 'content', 'options', 'source'
+            ).order_by('id')   # 主键天然有索引，避免 filesort
+        else:
+            # 管理列表：需要 level name 和 knowledge_points
+            qs = Question.objects.select_related('level').prefetch_related('knowledge_points')
+
+        level      = self.request.query_params.get('level')
+        qtype      = self.request.query_params.get('type')
         difficulty = self.request.query_params.get('difficulty')
-        knowledge = self.request.query_params.get('knowledge')
-        search = self.request.query_params.get('search')
+        knowledge  = self.request.query_params.get('knowledge')
+        search     = self.request.query_params.get('search')
+        source     = self.request.query_params.get('source')
 
         if level:
             qs = qs.filter(level_id=level)
@@ -76,7 +101,17 @@ class QuestionListCreateView(generics.ListCreateAPIView):
             qs = qs.filter(knowledge_points__id=knowledge)
         if search:
             qs = qs.filter(content__icontains=search)
+        if source:
+            qs = qs.filter(source__icontains=source)
         return qs
+
+    def list(self, request, *args, **kwargs):
+        # 组卷模式：跳过分页（不执行 COUNT(*)），直接返回数组
+        if request.query_params.get('for_exam'):
+            qs = self.filter_queryset(self.get_queryset())
+            serializer = self.get_serializer(qs, many=True)
+            return Response(serializer.data)
+        return super().list(request, *args, **kwargs)
 
 
 class QuestionDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -358,4 +393,287 @@ def pdf_import_confirm(request):
         'created_count': len(created),
         'error_count': len(errors),
         'errors': errors,
+    })
+
+
+# ─── AI 功能端点 ─────────────────────────────────────
+
+@api_view(['POST'])
+@permission_classes([AdminPermission])
+def ai_suggest_tags(request):
+    """
+    AI 批量建议知识点标签（只返回建议，不写库）。
+    请求体：{ "question_ids": [1, 2, ...] }
+    返回：{ results: [{ question_id, content, suggested_ids }], errors: [...] }
+    """
+    from .ai_service import suggest_tags_for_question
+    from apps.knowledge.models import KnowledgePoint
+
+    question_ids = request.data.get('question_ids', [])
+    if not question_ids:
+        return Response({'detail': '请提供 question_ids'}, status=400)
+
+    questions = list(Question.objects.filter(id__in=question_ids).only('id', 'content', 'level_id'))
+    if not questions:
+        return Response({'detail': '未找到题目'}, status=404)
+
+    # 加载所有级别的知识点，支持跨级标注
+    kps = KnowledgePoint.objects.select_related('chapter__level').values(
+        'id', 'name', 'description',
+        'chapter__name', 'chapter__level_id', 'chapter__level__name',
+    ).order_by('chapter__level_id', 'chapter__sort_order')
+
+    kp_list_all = [
+        {
+            'id':          kp['id'],
+            'name':        kp['name'],
+            'description': kp['description'] or '',
+            'chapter':     kp['chapter__name'],
+            'level':       kp['chapter__level_id'],
+            'level_name':  kp['chapter__level__name'] or f"GESP{kp['chapter__level_id']}级",
+        }
+        for kp in kps
+    ]
+
+    results, errors = [], []
+    for q in questions:
+        if not kp_list_all:
+            errors.append({'question_id': q.id, 'error': '系统中尚无知识点，请先导入知识点'})
+            continue
+        try:
+            suggested = suggest_tags_for_question(q.content, kp_list_all, q.level_id)
+            results.append({
+                'question_id':   q.id,
+                'content':       q.content[:120],
+                'suggested_ids': suggested,
+            })
+        except Exception as e:
+            errors.append({'question_id': q.id, 'error': str(e)})
+
+    return Response({'results': results, 'errors': errors})
+
+
+@api_view(['POST'])
+@permission_classes([AdminPermission])
+def ai_confirm_tags(request):
+    """
+    保存人工确认后的知识点标签。
+    请求体：[{ "question_id": 1, "knowledge_point_ids": [5, 12] }, ...]
+    """
+    items = request.data
+    if not isinstance(items, list):
+        return Response({'detail': '请求体应为数组'}, status=400)
+
+    updated = 0
+    for item in items:
+        qid   = item.get('question_id')
+        kpids = item.get('knowledge_point_ids', [])
+        try:
+            q = Question.objects.get(id=qid)
+            q.knowledge_points.set(kpids)
+            updated += 1
+        except Question.DoesNotExist:
+            pass
+
+    return Response({'updated': updated})
+
+
+@api_view(['POST'])
+@permission_classes([AdminPermission])
+def ai_generate_questions(request):
+    """
+    AI 生成题目草稿（不入库，由前端展示审核后再提交 batch create）。
+    请求体：{ "knowledge_point_id": 5, "question_type": 1, "count": 5 }
+    """
+    from .ai_service import generate_questions
+    from apps.knowledge.models import KnowledgePoint
+
+    kp_id = request.data.get('knowledge_point_id')
+    qtype = int(request.data.get('question_type', 1))
+    count = min(int(request.data.get('count', 5)), 10)
+
+    if not kp_id:
+        return Response({'detail': '请提供 knowledge_point_id'}, status=400)
+
+    try:
+        kp = KnowledgePoint.objects.select_related('chapter__level').get(id=kp_id)
+    except KnowledgePoint.DoesNotExist:
+        return Response({'detail': '知识点不存在'}, status=404)
+
+    examples = list(
+        Question.objects.filter(
+            knowledge_points=kp, is_active=True, question_type=qtype
+        ).values('content', 'options', 'answer')[:5]
+    )
+
+    try:
+        drafts = generate_questions(
+            knowledge_point_name=kp.name,
+            knowledge_point_desc=kp.description,
+            chapter_name=kp.chapter.name,
+            level_name=kp.chapter.level.name,
+            question_type=qtype,
+            count=count,
+            examples=examples,
+        )
+    except Exception as e:
+        return Response({'detail': f'AI 生成失败：{e}'}, status=500)
+
+    for d in drafts:
+        d['level'] = kp.chapter.level_id
+        d['knowledge_point_ids'] = [kp_id]
+
+    return Response({'questions': drafts, 'knowledge_point': kp.name})
+
+
+# ─── AI 配置管理 ──────────────────────────────────────────
+
+from .ai_service import AVAILABLE_MODELS
+
+
+@api_view(['GET', 'PUT'])
+@permission_classes([AdminPermission])
+def ai_config_view(request):
+    """获取或更新 AI 配置（API Key、模型）"""
+    from .models import AIConfig
+    from .ai_service import invalidate_config_cache
+
+    from .ai_service import encrypt_api_key, decrypt_api_key
+
+    env_key = getattr(settings, 'DASHSCOPE_API_KEY', '')
+
+    if request.method == 'GET':
+        cfg = AIConfig.objects.first()
+        db_has_key = bool(cfg and cfg.api_key)
+
+        if db_has_key:
+            # 解密后只展示脱敏版本，绝不返回明文
+            plain = decrypt_api_key(cfg.api_key)
+            masked = plain[:8] + '****' + plain[-4:] if len(plain) > 12 else '****'
+            key_source = 'db'
+        elif env_key:
+            masked = env_key[:8] + '****' + env_key[-4:] if len(env_key) > 12 else '****'
+            key_source = 'env'
+        else:
+            masked = ''
+            key_source = 'none'
+
+        return Response({
+            'has_key':        db_has_key or bool(env_key),
+            'key_source':     key_source,   # 'db' | 'env' | 'none'
+            'api_key_masked': masked,
+            'tag_model':      cfg.tag_model if cfg else 'qwen-plus',
+            'gen_model':      cfg.gen_model if cfg else 'qwen-plus',
+            'updated_at':     cfg.updated_at if cfg else None,
+            'available_models': AVAILABLE_MODELS,
+        })
+
+    # PUT —— 保存时加密，原始明文不落库
+    cfg, _ = AIConfig.objects.get_or_create(id=1)
+    if 'api_key' in request.data:
+        new_key = request.data.get('api_key', '').strip()
+        if new_key and '****' not in new_key:
+            cfg.api_key = encrypt_api_key(new_key)   # 加密后存储
+        elif not new_key:
+            cfg.api_key = ''   # 清除，回退到 .env
+    cfg.tag_model  = request.data.get('tag_model', cfg.tag_model)
+    cfg.gen_model  = request.data.get('gen_model', cfg.gen_model)
+    cfg.updated_by = request.user
+    cfg.save()
+    invalidate_config_cache()
+    return Response({'detail': '配置已保存'})
+
+
+@api_view(['POST'])
+@permission_classes([AdminPermission])
+def ai_test_model(request):
+    """测试指定模型的可用性，返回响应时间和结果"""
+    import time
+    from .ai_service import _call_qwen
+    from .models import AIUsageLog
+
+    model = request.data.get('model', 'qwen-plus')
+    try:
+        t0  = time.time()
+        txt = _call_qwen(
+            [{"role": "user", "content": "请只回复：ok"}],
+            temperature=0,
+            model=model,
+            operation=AIUsageLog.OP_TEST,
+        )
+        return Response({
+            'success':    True,
+            'model':      model,
+            'response':   txt,
+            'latency_ms': int((time.time() - t0) * 1000),
+        })
+    except Exception as e:
+        return Response({
+            'success': False,
+            'model':   model,
+            'error':   str(e),
+        })
+
+
+@api_view(['GET'])
+@permission_classes([AdminPermission])
+def ai_usage_stats(request):
+    """AI 用量统计：总量 / 按操作 / 按模型 / 每日趋势 / 最近记录"""
+    from .models import AIUsageLog
+
+    days  = max(1, min(int(request.query_params.get('days', 30)), 365))
+    since = timezone.now() - timedelta(days=days)
+    qs    = AIUsageLog.objects.filter(created_at__gte=since)
+
+    totals = qs.aggregate(
+        total_calls    = Count('id'),
+        success_calls  = Count('id', filter=Q(success=True)),
+        total_tokens   = Sum('total_tokens'),
+        prompt_tokens  = Sum('prompt_tokens'),
+        completion_tokens = Sum('completion_tokens'),
+        avg_latency_ms = Avg('latency_ms'),
+    )
+
+    by_operation = list(
+        qs.values('operation')
+          .annotate(calls=Count('id'), tokens=Sum('total_tokens'),
+                    success=Count('id', filter=Q(success=True)))
+          .order_by('operation')
+    )
+    op_names = dict(AIUsageLog.OPERATION_CHOICES)
+    for item in by_operation:
+        item['operation_name'] = op_names.get(item['operation'], '未知')
+
+    by_model = list(
+        qs.values('model')
+          .annotate(calls=Count('id'), tokens=Sum('total_tokens'))
+          .order_by('-calls')
+    )
+
+    daily = list(
+        qs.filter(success=True)
+          .annotate(date=TruncDate('created_at'))
+          .values('date')
+          .annotate(calls=Count('id'), tokens=Sum('total_tokens'))
+          .order_by('date')
+    )
+    for d in daily:
+        d['date'] = d['date'].strftime('%Y-%m-%d') if d['date'] else ''
+
+    recent = list(
+        AIUsageLog.objects.all()[:50]
+        .values('id', 'operation', 'model',
+                'prompt_tokens', 'completion_tokens', 'total_tokens',
+                'success', 'latency_ms', 'error_msg', 'created_at')
+    )
+    for item in recent:
+        item['operation_name'] = op_names.get(item['operation'], '未知')
+
+    return Response({
+        'days':         days,
+        'totals':       totals,
+        'by_operation': by_operation,
+        'by_model':     by_model,
+        'daily':        daily,
+        'recent':       recent,
     })

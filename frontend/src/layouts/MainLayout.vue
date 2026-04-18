@@ -50,6 +50,7 @@
           <el-menu-item index="/admin/exam-templates">试卷管理</el-menu-item>
           <el-menu-item index="/admin/members">会员管理</el-menu-item>
           <el-menu-item index="/admin/classes">班级管理</el-menu-item>
+          <el-menu-item index="/admin/ai-questions">AI 题目工具</el-menu-item>
         </el-sub-menu>
       </el-menu>
     </el-aside>
@@ -69,6 +70,10 @@
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item @click="$router.push('/profile')">个人中心</el-dropdown-item>
+                <el-dropdown-item @click="$router.push('/ai-settings')">我的 AI 设置</el-dropdown-item>
+                <template v-if="userStore.isAdmin">
+                  <el-dropdown-item divided @click="$router.push('/admin/ai-settings')">管理员 AI 设置</el-dropdown-item>
+                </template>
                 <el-dropdown-item divided @click="handleLogout">退出登录</el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -103,7 +108,8 @@ function handleLogout() {
   background: #fff;
   border-right: 1px solid #E5E7EB;
   transition: width 0.3s;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .logo {

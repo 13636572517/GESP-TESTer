@@ -15,7 +15,7 @@ class QuestionSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'level', 'level_name', 'question_type', 'type_display',
             'difficulty', 'difficulty_display', 'content', 'options',
-            'answer', 'explanation', 'source', 'knowledge_point_ids',
+            'answer', 'explanation', 'source', 'source_type', 'knowledge_point_ids',
             'is_active', 'created_at',
         ]
 
@@ -29,7 +29,7 @@ class QuestionCreateSerializer(serializers.ModelSerializer):
         model = Question
         fields = [
             'level', 'question_type', 'difficulty', 'content', 'options',
-            'answer', 'explanation', 'source', 'knowledge_point_ids',
+            'answer', 'explanation', 'source', 'source_type', 'knowledge_point_ids',
         ]
 
     def create(self, validated_data):
@@ -57,3 +57,12 @@ class QuestionBriefSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
         fields = ['id', 'question_type', 'type_display', 'content', 'options']
+
+
+class QuestionForExamSerializer(serializers.ModelSerializer):
+    """试卷组卷时使用的精简序列化器：只返回选题/预览所需字段，无 M2M 查询"""
+    type_display = serializers.CharField(source='get_question_type_display', read_only=True)
+
+    class Meta:
+        model = Question
+        fields = ['id', 'question_type', 'type_display', 'content', 'options', 'source']

@@ -26,18 +26,30 @@
       </el-form>
     </el-card>
 
+    <!-- 操作栏 -->
+    <div style="display: flex; justify-content: flex-end; margin-bottom: 12px">
+      <el-button type="primary" @click="showCreate">
+        <el-icon><Plus /></el-icon> 新建账号
+      </el-button>
+    </div>
+
     <!-- 用户列表 -->
     <el-card>
       <el-table :data="users" stripe v-loading="loading">
-        <el-table-column prop="id" label="ID" width="70" />
-        <el-table-column label="头像" width="60">
+        <el-table-column prop="id" label="ID" width="60" />
+        <el-table-column label="头像" width="56">
           <template #default="{ row }">
             <el-avatar :size="32" :src="row.avatar || undefined" style="background: #1865F2">
-              {{ (row.nickname || row.phone || 'U')[0] }}
+              {{ (row.nickname || row.username || row.phone || 'U')[0] }}
             </el-avatar>
           </template>
         </el-table-column>
-        <el-table-column prop="phone" label="手机号" width="130" />
+        <el-table-column label="账号 / 手机号" min-width="140" show-overflow-tooltip>
+          <template #default="{ row }">
+            <div v-if="row.username" style="font-family: monospace; font-size: 13px">{{ row.username }}</div>
+            <div v-if="row.phone" style="color: #6B7280; font-size: 12px">{{ row.phone }}</div>
+          </template>
+        </el-table-column>
         <el-table-column prop="nickname" label="昵称" width="120" show-overflow-tooltip />
         <el-table-column label="级别" width="80">
           <template #default="{ row }">
@@ -84,9 +96,12 @@
     </el-card>
 
     <!-- 编辑弹窗 -->
-    <el-dialog v-model="editVisible" title="编辑用户" width="400px">
-      <el-form :model="editForm" label-width="80px">
-        <el-form-item label="手机号">
+    <el-dialog v-model="editVisible" title="编辑用户" width="420px">
+      <el-form :model="editForm" label-width="90px">
+        <el-form-item v-if="editForm.username" label="用户名">
+          <el-input :value="editForm.username" disabled />
+        </el-form-item>
+        <el-form-item v-if="editForm.phone" label="手机号">
           <el-input :value="editForm.phone" disabled />
         </el-form-item>
         <el-form-item label="昵称">
@@ -100,10 +115,41 @@
         <el-form-item label="管理员">
           <el-switch v-model="editForm.is_admin" active-text="是" inactive-text="否" />
         </el-form-item>
+        <el-divider content-position="left" style="margin: 8px 0">重置密码（选填）</el-divider>
+        <el-form-item label="新密码">
+          <el-input v-model="editForm.new_password" type="password" show-password placeholder="留空则不修改密码" />
+        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="editVisible = false">取消</el-button>
         <el-button type="primary" :loading="saving" @click="handleSave">保存</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 新建账号弹窗 -->
+    <el-dialog v-model="createVisible" title="新建账号" width="420px">
+      <el-form :model="createForm" label-width="90px">
+        <el-form-item label="用户名" required>
+          <el-input v-model="createForm.username" placeholder="登录时使用的用户名" clearable />
+        </el-form-item>
+        <el-form-item label="密码" required>
+          <el-input v-model="createForm.password" type="password" show-password placeholder="至少6位" />
+        </el-form-item>
+        <el-form-item label="昵称">
+          <el-input v-model="createForm.nickname" placeholder="不填则同用户名" />
+        </el-form-item>
+        <el-form-item label="学习级别">
+          <el-select v-model="createForm.current_level" style="width: 100%">
+            <el-option v-for="i in 8" :key="i" :label="`${i}级`" :value="i" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="管理员">
+          <el-switch v-model="createForm.is_admin" active-text="是" inactive-text="否" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="createVisible = false">取消</el-button>
+        <el-button type="primary" :loading="creating" @click="handleCreate">创建</el-button>
       </template>
     </el-dialog>
   </div>
@@ -112,8 +158,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Search } from '@element-plus/icons-vue'
-import { getAdminUsers, updateAdminUser, deleteAdminUser } from '../../api/admin'
+import { Search, Plus } from '@element-plus/icons-vue'
+import { getAdminUsers, createAdminUser, updateAdminUser, deleteAdminUser } from '../../api/admin'
 
 const users = ref([])
 const loading = ref(false)
@@ -128,6 +174,10 @@ const editVisible = ref(false)
 const saving = ref(false)
 const editForm = ref({})
 const editId = ref(null)
+
+const createVisible = ref(false)
+const creating = ref(false)
+const createForm = ref({ username: '', password: '', nickname: '', current_level: 1, is_admin: false })
 
 async function loadUsers() {
   loading.value = true
@@ -144,25 +194,51 @@ async function loadUsers() {
   }
 }
 
+function showCreate() {
+  createForm.value = { username: '', password: '', nickname: '', current_level: 1, is_admin: false }
+  createVisible.value = true
+}
+
+async function handleCreate() {
+  if (!createForm.value.username.trim()) return ElMessage.warning('请填写用户名')
+  if (createForm.value.password.length < 6) return ElMessage.warning('密码至少6位')
+  creating.value = true
+  try {
+    await createAdminUser(createForm.value)
+    ElMessage.success('账号已创建')
+    createVisible.value = false
+    loadUsers()
+  } finally {
+    creating.value = false
+  }
+}
+
 function showEdit(row) {
   editId.value = row.id
   editForm.value = {
+    username: row.username,
     phone: row.phone,
     nickname: row.nickname,
     current_level: row.current_level,
     is_admin: row.is_admin,
+    new_password: '',
   }
   editVisible.value = true
 }
 
 async function handleSave() {
+  if (editForm.value.new_password && editForm.value.new_password.length < 6) {
+    return ElMessage.warning('新密码至少6位')
+  }
   saving.value = true
   try {
-    await updateAdminUser(editId.value, {
+    const payload = {
       nickname: editForm.value.nickname,
       current_level: editForm.value.current_level,
       is_admin: editForm.value.is_admin,
-    })
+    }
+    if (editForm.value.new_password) payload.new_password = editForm.value.new_password
+    await updateAdminUser(editId.value, payload)
     ElMessage.success('保存成功')
     editVisible.value = false
     loadUsers()
@@ -172,7 +248,7 @@ async function handleSave() {
 }
 
 async function handleDelete(row) {
-  await ElMessageBox.confirm(`确定删除用户「${row.nickname || row.phone}」？此操作不可恢复。`, '删除确认', {
+  await ElMessageBox.confirm(`确定删除用户「${row.nickname || row.username || row.phone}」？此操作不可恢复。`, '删除确认', {
     type: 'warning',
     confirmButtonText: '确定删除',
     cancelButtonText: '取消',

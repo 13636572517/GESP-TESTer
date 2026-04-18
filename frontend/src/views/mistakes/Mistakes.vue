@@ -47,6 +47,13 @@
             <el-tag :type="item.is_mastered ? 'success' : 'danger'" size="small">
               {{ item.is_mastered ? '已掌握' : '未掌握' }}
             </el-tag>
+            <button class="btn-ai" @click="aiDialog.open({
+              question:  item.question,
+              isCorrect: false,
+              title:     'AI 讲解错题',
+            })">
+              💬 AI 讲解
+            </button>
             <el-button
               v-if="!item.is_mastered"
               class="btn-mastered" size="small"
@@ -59,6 +66,8 @@
       </div>
       <el-empty v-if="mistakes.length === 0" description="暂无错题" />
     </el-card>
+
+    <AIExplainDialog ref="aiDialog" />
   </div>
 </template>
 
@@ -67,6 +76,9 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { getMistakes, getMistakeStats, generateReview, markMastered } from '../../api/practice'
+import AIExplainDialog from '../../components/AIExplainDialog.vue'
+
+const aiDialog = ref(null)
 
 const router = useRouter()
 const mistakes = ref([])
@@ -114,6 +126,29 @@ onMounted(async () => {
 .mistake-item:last-child {
   border-bottom: none;
 }
+/* AI 讲解按钮 */
+.btn-ai {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  height: 26px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #1865F2;
+  background: #EBF0FF;
+  border: 1px solid #B8D1FB;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.btn-ai:hover {
+  color: #fff;
+  background: #1865F2;
+  border-color: #1865F2;
+}
+
 .btn-mastered {
   color: #0D9488 !important;
   background: #E6FAF5 !important;

@@ -5,7 +5,7 @@ from apps.knowledge.models import GespLevel
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
-    phone = models.CharField('手机号', max_length=11, unique=True)
+    phone = models.CharField('手机号', max_length=11, unique=True, null=True, blank=True, default=None)
     avatar = models.ImageField('头像', upload_to='avatars/', blank=True, default='')
     nickname = models.CharField('昵称', max_length=50, blank=True, default='')
     current_level = models.PositiveSmallIntegerField('当前学习级别', default=1)
@@ -61,6 +61,22 @@ class Classroom(models.Model):
     @property
     def member_count(self):
         return self.members.count()
+
+
+class UserAIConfig(models.Model):
+    """普通用户自己的 AI 配置（一人一行）"""
+    user      = models.OneToOneField(User, on_delete=models.CASCADE, related_name='ai_config')
+    api_key   = models.TextField('API Key（加密存储）', blank=True, default='')
+    tag_model = models.CharField('标注模型', max_length=100, default='qwen-plus')
+    gen_model = models.CharField('出题模型', max_length=100, default='qwen-plus')
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'user_ai_config'
+        verbose_name = '用户AI配置'
+
+    def __str__(self):
+        return f'{self.user.username} AI配置'
 
 
 class ClassroomMember(models.Model):

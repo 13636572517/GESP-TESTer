@@ -11,6 +11,7 @@ from .serializers import (
     RegisterSerializer, LoginSerializer, SmsLoginSerializer,
     SmsSendSerializer, ResetPasswordSerializer,
     UserProfileSerializer, ChangePasswordSerializer,
+    UsernameLoginSerializer,
 )
 from .utils import send_sms_code, verify_sms_code
 
@@ -77,6 +78,34 @@ def login(request):
 
     if not user.check_password(password):
         return Response({'detail': '密码错误'}, status=400)
+
+    refresh = RefreshToken.for_user(user)
+    return Response({
+        'access': str(refresh.access_token),
+        'refresh': str(refresh),
+    })
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def login_by_username(request):
+    """账号+密码登录（管理员创建的账号）"""
+    serializer = UsernameLoginSerializer(data=request.data)
+    serializer.is_valid(raise_exception=True)
+    username = serializer.validated_data['username']
+    password = serializer.validated_data['password']
+
+    try:
+        user = User.objects.get(username=username)
+    except User.DoesNotExist:
+        return Response({'detail': '用户名不存在'}, status=400)
+
+    if not user.check_password(password):
+        return Response({'detail': '密码错误'}, status=400)
+
+    # 确保有 profile
+    if not hasattr(user, 'profile'):
+        return Response({'detail': '账号异常，请联系管理员'}, status=400)
 
     refresh = RefreshToken.for_user(user)
     return Response({

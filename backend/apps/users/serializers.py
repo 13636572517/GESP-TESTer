@@ -22,6 +22,11 @@ class LoginSerializer(serializers.Serializer):
     password = serializers.CharField(write_only=True)
 
 
+class UsernameLoginSerializer(serializers.Serializer):
+    username = serializers.CharField(max_length=150)
+    password = serializers.CharField(write_only=True)
+
+
 class SmsLoginSerializer(serializers.Serializer):
     phone = serializers.CharField(max_length=11)
     code = serializers.CharField(max_length=6)
@@ -61,6 +66,7 @@ class ChangePasswordSerializer(serializers.Serializer):
 
 class AdminUserSerializer(serializers.ModelSerializer):
     """用于管理员列表展示和编辑的用户序列化器"""
+    username = serializers.CharField(read_only=True)
     nickname = serializers.CharField(source='profile.nickname', read_only=True)
     phone = serializers.CharField(source='profile.phone', read_only=True)
     current_level = serializers.IntegerField(source='profile.current_level', read_only=True)
@@ -71,7 +77,7 @@ class AdminUserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'phone', 'nickname', 'current_level', 'is_admin', 'avatar', 'created_at', 'class_names']
+        fields = ['id', 'username', 'phone', 'nickname', 'current_level', 'is_admin', 'avatar', 'created_at', 'class_names']
 
     def get_avatar(self, obj):
         try:

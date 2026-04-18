@@ -80,6 +80,11 @@ const routes = [
         name: 'Profile',
         component: () => import('../views/profile/Profile.vue'),
       },
+      {
+        path: 'ai-settings',
+        name: 'UserAISettings',
+        component: () => import('../views/profile/UserAISettings.vue'),
+      },
       // 管理端
       {
         path: 'admin/questions',
@@ -115,6 +120,18 @@ const routes = [
         path: 'admin/classes',
         name: 'AdminClasses',
         component: () => import('../views/admin/Classes.vue'),
+        meta: { admin: true },
+      },
+      {
+        path: 'admin/ai-questions',
+        name: 'AdminAIQuestions',
+        component: () => import('../views/admin/AIQuestions.vue'),
+        meta: { admin: true },
+      },
+      {
+        path: 'admin/ai-settings',
+        name: 'AdminAISettings',
+        component: () => import('../views/admin/AISettings.vue'),
         meta: { admin: true },
       },
     ],
