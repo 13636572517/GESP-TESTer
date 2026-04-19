@@ -2,8 +2,8 @@
   <div class="auth-page">
     <div class="auth-card">
       <div class="auth-brand">
-        <div class="brand-mark">G</div>
-        <h2>GESP考试训练平台</h2>
+        <img src="/yusuan_logo_512.png" class="brand-mark" alt="御算" />
+        <h2>御算·LOGOS</h2>
       </div>
       <el-tabs v-model="loginType">
         <el-tab-pane label="账号登录" name="username">
@@ -162,16 +162,10 @@ async function sendCode(purpose) {
   margin-bottom: 24px;
 }
 .brand-mark {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: #1865F2;
-  color: #fff;
-  font-size: 24px;
-  font-weight: 700;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  width: 96px;
+  height: 96px;
+  border-radius: 20px;
+  object-fit: contain;
   margin-bottom: 12px;
 }
 .auth-card h2 {

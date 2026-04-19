@@ -2,8 +2,8 @@
   <el-container style="height: 100vh">
     <el-aside :width="isCollapse ? '64px' : '220px'" class="app-sidebar">
       <div class="logo" @click="$router.push('/')">
-        <div class="logo-mark">G</div>
-        <span v-show="!isCollapse" class="logo-text">GESP训练</span>
+        <img src="/yusuan_logo_192.png" class="logo-mark" alt="御算" />
+        <span v-show="!isCollapse" class="logo-text">御算·LOGOS</span>
       </div>
       <el-menu
         :default-active="$route.path"
@@ -122,16 +122,10 @@ function handleLogout() {
   border-bottom: 1px solid #E5E7EB;
 }
 .logo-mark {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  background: #1865F2;
-  color: #fff;
-  font-size: 18px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  object-fit: contain;
 }
 .logo-text {
   font-size: 18px;
