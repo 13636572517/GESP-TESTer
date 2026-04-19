@@ -69,10 +69,27 @@ def invalidate_config_cache():
 
 
 AVAILABLE_MODELS = [
-    {'value': 'qwen-turbo', 'label': 'qwen-turbo（快速，适合标注）'},
-    {'value': 'qwen-plus',  'label': 'qwen-plus（均衡，推荐）'},
-    {'value': 'qwen-max',   'label': 'qwen-max（最强，适合复杂出题）'},
-    {'value': 'qwen-long',  'label': 'qwen-long（长文本）'},
+    # Qwen 旗舰系列
+    {'value': 'qwen-max',             'label': 'qwen-max（旗舰，最强推理）',          'group': 'Qwen 旗舰'},
+    {'value': 'qwen-max-latest',      'label': 'qwen-max-latest（旗舰最新版）',       'group': 'Qwen 旗舰'},
+    # Qwen Plus 系列
+    {'value': 'qwen-plus',            'label': 'qwen-plus（均衡，推荐）',             'group': 'Qwen Plus'},
+    {'value': 'qwen-plus-latest',     'label': 'qwen-plus-latest（Plus 最新版）',     'group': 'Qwen Plus'},
+    # Qwen Turbo 系列
+    {'value': 'qwen-turbo',           'label': 'qwen-turbo（快速，适合标注）',        'group': 'Qwen Turbo'},
+    {'value': 'qwen-turbo-latest',    'label': 'qwen-turbo-latest（Turbo 最新版）',   'group': 'Qwen Turbo'},
+    # Qwen Long
+    {'value': 'qwen-long',            'label': 'qwen-long（超长上下文）',             'group': 'Qwen Long'},
+    # Qwen3 系列
+    {'value': 'qwen3-235b-a22b',      'label': 'qwen3-235b-a22b（Qwen3 旗舰）',      'group': 'Qwen3'},
+    {'value': 'qwen3-30b-a3b',        'label': 'qwen3-30b-a3b（Qwen3 均衡）',        'group': 'Qwen3'},
+    {'value': 'qwen3-8b',             'label': 'qwen3-8b（Qwen3 轻量）',             'group': 'Qwen3'},
+    # 数学专项
+    {'value': 'qwen-math-plus',       'label': 'qwen-math-plus（数学增强）',          'group': '数学'},
+    {'value': 'qwen-math-turbo',      'label': 'qwen-math-turbo（数学快速）',         'group': '数学'},
+    # 编程专项
+    {'value': 'qwen-coder-plus',      'label': 'qwen-coder-plus（编程增强）',         'group': '编程'},
+    {'value': 'qwen-coder-turbo',     'label': 'qwen-coder-turbo（编程快速）',        'group': '编程'},
 ]
 
 

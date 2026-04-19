@@ -4,8 +4,15 @@
 
     <el-tabs v-model="activeTab">
       <el-tab-pane label="选择试卷" name="templates">
+        <div style="margin-bottom:16px;display:flex;align-items:center;gap:8px">
+          <span style="font-size:14px;color:#606266">级别筛选：</span>
+          <el-radio-group v-model="templateLevel" size="small">
+            <el-radio-button :value="0">全部</el-radio-button>
+            <el-radio-button v-for="l in levels" :key="l.id" :value="l.id">{{ l.name }}</el-radio-button>
+          </el-radio-group>
+        </div>
         <el-row :gutter="16">
-          <el-col :span="8" v-for="tpl in templates" :key="tpl.id">
+          <el-col :span="8" v-for="tpl in filteredTemplates" :key="tpl.id">
             <el-card shadow="hover" style="margin-bottom: 16px; cursor: pointer; transition: transform 0.2s" @click="handleStartExam(tpl)">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px">
                 <el-tag>{{ tpl.level_name }}</el-tag>
@@ -18,7 +25,7 @@
             </el-card>
           </el-col>
         </el-row>
-        <el-empty v-if="templates.length === 0" description="暂无试卷" />
+        <el-empty v-if="filteredTemplates.length === 0" description="暂无试卷" />
 
         <el-divider>或者随机组卷</el-divider>
         <el-form :inline="true" :model="randomForm">
@@ -74,7 +81,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getExamTemplates, startExam, getExamHistory } from '../../api/exam'
@@ -85,6 +92,11 @@ const activeTab = ref('templates')
 const templates = ref([])
 const history = ref([])
 const levels = ref([])
+
+const templateLevel = ref(0)
+const filteredTemplates = computed(() =>
+  templateLevel.value === 0 ? templates.value : templates.value.filter(t => t.level === templateLevel.value)
+)
 
 const randomForm = ref({
   level_id: 1,

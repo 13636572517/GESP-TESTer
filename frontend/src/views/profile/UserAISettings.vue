@@ -59,9 +59,14 @@
             <template #header><span class="card-title">模型配置</span></template>
             <el-form label-width="100px">
               <el-form-item label="出题模型">
-                <el-select v-model="configData.gen_model" style="width:300px">
-                  <el-option v-for="m in availableModels" :key="m.value" :label="m.label" :value="m.value" />
-                </el-select>
+                <div style="display:flex;flex-direction:column;gap:6px">
+                  <el-select v-model="configData.gen_model" style="width:340px" filterable allow-create default-first-option placeholder="选择模型">
+                    <el-option-group v-for="g in modelGroups" :key="g.label" :label="g.label">
+                      <el-option v-for="m in g.models" :key="m.value" :label="m.label" :value="m.value" />
+                    </el-option-group>
+                  </el-select>
+                  <el-input v-model="configData.gen_model" style="width:340px" placeholder="或手动输入模型 Code，如 qwen3-235b-a22b" clearable />
+                </div>
                 <span class="field-hint">用于 AI 辅助功能</span>
               </el-form-item>
               <el-form-item label="">
@@ -78,9 +83,14 @@
             <template #header><span class="card-title">连通性测试</span></template>
             <el-form label-width="100px" inline>
               <el-form-item label="测试模型">
-                <el-select v-model="testModel" style="width:260px">
-                  <el-option v-for="m in availableModels" :key="m.value" :label="m.label" :value="m.value" />
-                </el-select>
+                <div style="display:flex;flex-direction:column;gap:6px">
+                  <el-select v-model="testModel" style="width:340px" filterable allow-create default-first-option placeholder="选择模型">
+                    <el-option-group v-for="g in modelGroups" :key="g.label" :label="g.label">
+                      <el-option v-for="m in g.models" :key="m.value" :label="m.label" :value="m.value" />
+                    </el-option-group>
+                  </el-select>
+                  <el-input v-model="testModel" style="width:340px" placeholder="或手动输入模型 Code" clearable />
+                </div>
               </el-form-item>
               <el-form-item>
                 <el-button type="primary" :loading="testing" @click="handleTest">开始测试</el-button>
@@ -238,6 +248,15 @@ const activeTab = ref('config')
 // ─── 配置 Tab ────────────────────────────────────────────
 const configData      = ref({ api_key_masked: '', has_key: false, gen_model: 'qwen-plus', updated_at: '' })
 const availableModels = ref([])
+const modelGroups = computed(() => {
+  const map = {}
+  availableModels.value.forEach(m => {
+    const g = m.group || '其他'
+    if (!map[g]) map[g] = []
+    map[g].push(m)
+  })
+  return Object.entries(map).map(([label, models]) => ({ label, models }))
+})
 const hasKey          = computed(() => configData.value.has_key)
 const saving          = ref(false)
 const editingKey      = ref(false)
