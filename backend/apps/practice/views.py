@@ -282,3 +282,15 @@ def mark_mastered(request, pk):
     mistake.is_mastered = True
     mistake.save(update_fields=['is_mastered'])
     return Response({'detail': '已标记为掌握'})
+
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def unmark_mastered(request, pk):
+    try:
+        mistake = MistakeRecord.objects.get(id=pk, user=request.user)
+    except MistakeRecord.DoesNotExist:
+        return Response({'detail': '记录不存在'}, status=404)
+    mistake.is_mastered = False
+    mistake.save(update_fields=['is_mastered'])
+    return Response({'detail': '已撤销掌握'})

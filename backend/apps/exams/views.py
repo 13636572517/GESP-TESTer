@@ -17,6 +17,7 @@ from apps.stats.models import DailyStudyLog
 
 class ExamTemplateListView(generics.ListAPIView):
     serializer_class = ExamTemplateSerializer
+    pagination_class = None
 
     def get_queryset(self):
         qs = ExamTemplate.objects.filter(is_active=True).select_related('level')
@@ -289,6 +290,7 @@ from apps.questions.views import AdminPermission
 
 class AdminExamTemplateListCreateView(generics.ListCreateAPIView):
     permission_classes = [AdminPermission]
+    pagination_class = None
 
     def get_serializer_class(self):
         if self.request.method == 'POST':

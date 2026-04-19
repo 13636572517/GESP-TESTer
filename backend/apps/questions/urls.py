@@ -19,4 +19,8 @@ urlpatterns = [
     path('admin/ai-config/', views.ai_config_view, name='ai-config'),
     path('admin/ai-config/test/', views.ai_test_model, name='ai-test-model'),
     path('admin/ai-usage/', views.ai_usage_stats, name='ai-usage-stats'),
+    # 题目反馈
+    path('questions/<int:pk>/feedback/', views.submit_feedback, name='question-feedback'),
+    path('admin/feedbacks/', views.admin_feedback_list, name='admin-feedback-list'),
+    path('admin/feedbacks/<int:pk>/', views.admin_feedback_handle, name='admin-feedback-handle'),
 ]

@@ -134,6 +134,12 @@ const routes = [
         component: () => import('../views/admin/AISettings.vue'),
         meta: { admin: true },
       },
+      {
+        path: 'admin/feedbacks',
+        name: 'AdminFeedbacks',
+        component: () => import('../views/admin/Feedbacks.vue'),
+        meta: { admin: true },
+      },
     ],
   },
   {

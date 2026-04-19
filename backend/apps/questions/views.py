@@ -15,7 +15,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.parsers import MultiPartParser, FormParser
-from .models import Question
+from .models import Question, QuestionFeedback
 from .serializers import QuestionSerializer, QuestionCreateSerializer, QuestionForExamSerializer
 
 
@@ -678,3 +678,96 @@ def ai_usage_stats(request):
         'daily':        daily,
         'recent':       recent,
     })
+
+
+# ─── 题目反馈 ─────────────────────────────────────────────────────────────────
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def submit_feedback(request, pk):
+    """学员提交题目反馈"""
+    try:
+        question = Question.objects.get(pk=pk, is_active=True)
+    except Question.DoesNotExist:
+        return Response({'detail': '题目不存在'}, status=404)
+
+    feedback_type = request.data.get('feedback_type')
+    content = request.data.get('content', '').strip()
+    if not feedback_type:
+        return Response({'detail': '请选择反馈类型'}, status=400)
+
+    feedback = QuestionFeedback.objects.create(
+        question=question,
+        user=request.user,
+        feedback_type=feedback_type,
+        content=content,
+    )
+    return Response({'id': feedback.id, 'detail': '反馈已提交，感谢您的反馈！'}, status=201)
+
+
+def _is_admin(request):
+    return hasattr(request.user, 'profile') and request.user.profile.is_admin
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def admin_feedback_list(request):
+    """管理员：获取反馈列表"""
+    if not _is_admin(request):
+        return Response({'detail': '无权限'}, status=403)
+
+    status_filter = request.query_params.get('status')
+    qs = QuestionFeedback.objects.select_related('question', 'user__profile').order_by('-created_at')
+    if status_filter is not None and status_filter != '':
+        qs = qs.filter(status=status_filter)
+
+    page = int(request.query_params.get('page', 1))
+    page_size = int(request.query_params.get('page_size', 20))
+    total = qs.count()
+    items = qs[(page - 1) * page_size: page * page_size]
+
+    data = []
+    for fb in items:
+        data.append({
+            'id': fb.id,
+            'question_id': fb.question_id,
+            'question_content': fb.question.content[:80],
+            'feedback_type': fb.feedback_type,
+            'feedback_type_display': fb.get_feedback_type_display(),
+            'content': fb.content,
+            'status': fb.status,
+            'status_display': fb.get_status_display(),
+            'admin_reply': fb.admin_reply,
+            'user_nickname': getattr(fb.user.profile, 'nickname', fb.user.username),
+            'user_phone': getattr(fb.user.profile, 'phone', ''),
+            'created_at': fb.created_at.strftime('%Y-%m-%d %H:%M'),
+            'handled_at': fb.handled_at.strftime('%Y-%m-%d %H:%M') if fb.handled_at else None,
+        })
+    return Response({'count': total, 'results': data})
+
+
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def admin_feedback_handle(request, pk):
+    """管理员：处理反馈（更新状态/回复）"""
+    if not _is_admin(request):
+        return Response({'detail': '无权限'}, status=403)
+
+    try:
+        feedback = QuestionFeedback.objects.get(pk=pk)
+    except QuestionFeedback.DoesNotExist:
+        return Response({'detail': '反馈不存在'}, status=404)
+
+    new_status = request.data.get('status')
+    admin_reply = request.data.get('admin_reply')
+
+    if new_status is not None:
+        feedback.status = new_status
+        if int(new_status) in (QuestionFeedback.STATUS_HANDLED, QuestionFeedback.STATUS_IGNORED):
+            from django.utils import timezone as tz
+            feedback.handled_at = tz.now()
+    if admin_reply is not None:
+        feedback.admin_reply = admin_reply
+    feedback.save()
+
+    return Response({'detail': '已更新'})

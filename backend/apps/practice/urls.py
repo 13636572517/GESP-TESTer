@@ -11,4 +11,5 @@ urlpatterns = [
     path('mistakes/stats/', views.mistake_stats, name='mistake-stats'),
     path('mistakes/review/', views.mistake_review, name='mistake-review'),
     path('mistakes/<int:pk>/mastered/', views.mark_mastered, name='mistake-mastered'),
+    path('mistakes/<int:pk>/unmastered/', views.unmark_mastered, name='mistake-unmastered'),
 ]

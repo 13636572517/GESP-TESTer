@@ -132,7 +132,7 @@ def extract_from_pdf(pdf_bytes: bytes, level: int, source: str) -> dict:
     client = OpenAI(
         api_key=api_key,
         base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
-        timeout=90,
+        timeout=600,
     )
 
     images = pdf_to_images(pdf_bytes)

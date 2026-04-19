@@ -61,6 +61,13 @@
             >
               标记掌握
             </el-button>
+            <el-button
+              v-else
+              class="btn-unmastered" size="small"
+              @click="handleUnmastered(item.id)"
+            >
+              撤销掌握
+            </el-button>
           </div>
         </div>
       </div>
@@ -75,7 +82,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { getMistakes, getMistakeStats, generateReview, markMastered } from '../../api/practice'
+import { getMistakes, getMistakeStats, generateReview, markMastered, unmarkMastered } from '../../api/practice'
 import AIExplainDialog from '../../components/AIExplainDialog.vue'
 
 const aiDialog = ref(null)
@@ -104,6 +111,12 @@ async function handleReview() {
 async function handleMastered(id) {
   await markMastered(id)
   ElMessage.success('已标记为掌握')
+  loadMistakes()
+}
+
+async function handleUnmastered(id) {
+  await unmarkMastered(id)
+  ElMessage.success('已撤销掌握，重新加入未掌握')
   loadMistakes()
 }
 
@@ -162,5 +175,19 @@ onMounted(async () => {
   color: #0A7A6E !important;
   background: #CCFAF0 !important;
   border-color: #0D9488 !important;
+}
+.btn-unmastered {
+  color: #9CA3AF !important;
+  background: #F3F4F6 !important;
+  border-color: #D1D5DB !important;
+  font-size: 12px !important;
+  padding: 4px 10px !important;
+  height: 26px !important;
+  font-weight: 500 !important;
+}
+.btn-unmastered:hover {
+  color: #D92916 !important;
+  background: #FEF2F2 !important;
+  border-color: #D92916 !important;
 }
 </style>

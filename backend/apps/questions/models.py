@@ -100,3 +100,41 @@ class Question(models.Model):
 
     def __str__(self):
         return f'[{self.get_question_type_display()}] {self.content[:50]}'
+
+
+class QuestionFeedback(models.Model):
+    TYPE_ANSWER_WRONG  = 1
+    TYPE_CONTENT_UNCLEAR = 2
+    TYPE_OPTION_ISSUE  = 3
+    TYPE_OTHER         = 4
+    TYPE_CHOICES = [
+        (TYPE_ANSWER_WRONG,    '答案有误'),
+        (TYPE_CONTENT_UNCLEAR, '题目表述不清'),
+        (TYPE_OPTION_ISSUE,    '选项有问题'),
+        (TYPE_OTHER,           '其他'),
+    ]
+    STATUS_PENDING  = 0
+    STATUS_HANDLED  = 1
+    STATUS_IGNORED  = 2
+    STATUS_CHOICES = [
+        (STATUS_PENDING, '待处理'),
+        (STATUS_HANDLED, '已处理'),
+        (STATUS_IGNORED, '已忽略'),
+    ]
+
+    question      = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='feedbacks', verbose_name='题目')
+    user          = models.ForeignKey(User, on_delete=models.CASCADE, related_name='feedbacks', verbose_name='反馈用户')
+    feedback_type = models.PositiveSmallIntegerField('反馈类型', choices=TYPE_CHOICES)
+    content       = models.TextField('反馈内容', blank=True, default='')
+    status        = models.PositiveSmallIntegerField('处理状态', choices=STATUS_CHOICES, default=STATUS_PENDING)
+    admin_reply   = models.TextField('管理员回复', blank=True, default='')
+    created_at    = models.DateTimeField(auto_now_add=True)
+    handled_at    = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = 'question_feedback'
+        verbose_name = '题目反馈'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'[{self.get_feedback_type_display()}] Q{self.question_id} by {self.user}'

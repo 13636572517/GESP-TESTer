@@ -17,9 +17,12 @@
       <!-- 题目区域 -->
       <div class="exam-main">
         <el-card v-if="currentQuestion">
-          <div class="question-header">
-            <el-tag>{{ currentQuestion.type_display }}</el-tag>
-            <span style="margin-left: 8px; color: #6B7280">第 {{ currentIndex + 1 }}/{{ questions.length }} 题</span>
+          <div class="question-header" style="display:flex;align-items:center;justify-content:space-between">
+            <div>
+              <el-tag>{{ currentQuestion.type_display }}</el-tag>
+              <span style="margin-left: 8px; color: #6B7280">第 {{ currentIndex + 1 }}/{{ questions.length }} 题</span>
+            </div>
+            <FeedbackDialog :question-id="currentQuestion.id" />
           </div>
 
           <div class="question-content" v-html="currentQuestion.content" v-highlight></div>
@@ -100,6 +103,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessageBox, ElMessage } from 'element-plus'
 import { getExam, saveExamAnswer, submitExam, reportSwitch } from '../../api/exam'
+import FeedbackDialog from '../../components/FeedbackDialog.vue'
 
 const route = useRoute()
 const router = useRouter()

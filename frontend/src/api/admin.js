@@ -2,8 +2,10 @@ import request from '../utils/request'
 
 // 题目管理
 export const getQuestions = (params) => request.get('/admin/questions/', { params })
+export const getAdminQuestionDetail = (id) => request.get(`/admin/questions/${id}/`)
 export const createQuestion = (data) => request.post('/admin/questions/', data)
 export const updateQuestion = (id, data) => request.put(`/admin/questions/${id}/`, data)
+export const updateAdminQuestion = (id, data) => request.patch(`/admin/questions/${id}/`, data)
 export const deleteQuestion = (id) => request.delete(`/admin/questions/${id}/`)
 
 // 批量操作
@@ -47,7 +49,7 @@ export function pdfExtract(formData) {
       'Content-Type': 'multipart/form-data',
       ...(userStore.token ? { Authorization: `Bearer ${userStore.token}` } : {}),
     },
-    timeout: 300000, // 5 分钟，大 PDF 多页识别需要足够长
+    timeout: 900000, // 15 分钟，大 PDF 多页识别需要足够长
   }).then(res => res.data)
 }
 export const pdfImportConfirm = (questions) => request.post('/admin/questions/pdf-import/', { questions })

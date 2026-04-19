@@ -176,16 +176,28 @@ def classroom_members(request, pk):
         return Response({'detail': '班级不存在'}, status=404)
 
     if request.method == 'POST':
-        phone = request.data.get('phone', '').strip()
         note = request.data.get('note', '').strip()
-        try:
-            profile = UserProfile.objects.select_related('user').get(phone=phone)
-        except UserProfile.DoesNotExist:
-            return Response({'detail': f'手机号 {phone} 未注册'}, status=400)
+        user_id = request.data.get('user_id')
+        phone = request.data.get('phone', '').strip()
+        if user_id:
+            try:
+                from django.contrib.auth import get_user_model
+                User = get_user_model()
+                target_user = User.objects.get(pk=user_id)
+            except User.DoesNotExist:
+                return Response({'detail': '用户不存在'}, status=400)
+        elif phone:
+            try:
+                profile = UserProfile.objects.select_related('user').get(phone=phone)
+                target_user = profile.user
+            except UserProfile.DoesNotExist:
+                return Response({'detail': f'手机号 {phone} 未注册'}, status=400)
+        else:
+            return Response({'detail': '请提供 user_id 或 phone'}, status=400)
 
         member, created = ClassroomMember.objects.get_or_create(
             classroom=classroom,
-            user=profile.user,
+            user=target_user,
             defaults={'note': note},
         )
         if not created:

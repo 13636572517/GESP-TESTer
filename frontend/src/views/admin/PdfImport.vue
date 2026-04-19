@@ -249,7 +249,7 @@ async function handleExtract() {
       extractErrors.value = [detail]
     } else if (e.code === 'ECONNABORTED') {
       ElMessage.error('请求超时，PDF页数过多或网络较慢，请尝试缩短PDF或重试')
-      extractErrors.value = ['请求超时（超过5分钟），建议拆分PDF后重试']
+      extractErrors.value = ['请求超时（超过15分钟），建议拆分PDF后重试']
     } else {
       ElMessage.error('网络错误，请确认后端服务正在运行')
       extractErrors.value = [String(e.message || '未知网络错误')]

@@ -100,10 +100,26 @@
     </el-dialog>
 
     <!-- 添加成员弹窗 -->
-    <el-dialog v-model="addMemberVisible" title="添加学员" width="380px">
+    <el-dialog v-model="addMemberVisible" title="添加学员" width="420px">
       <el-form label-width="80px">
-        <el-form-item label="手机号">
-          <el-input v-model="addPhone" placeholder="输入已注册学员手机号" />
+        <el-form-item label="搜索学员">
+          <el-select
+            v-model="selectedUserId"
+            filterable
+            remote
+            reserve-keyword
+            placeholder="输入手机号或昵称搜索"
+            :remote-method="searchUsers"
+            :loading="searchingUsers"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="u in userOptions"
+              :key="u.id"
+              :label="`${u.profile?.nickname || u.username}（${u.profile?.phone || u.username}）`"
+              :value="u.id"
+            />
+          </el-select>
         </el-form-item>
         <el-form-item label="备注">
           <el-input v-model="addNote" placeholder="可选" />
@@ -124,6 +140,7 @@ import { Plus } from '@element-plus/icons-vue'
 import {
   getClassrooms, createClassroom, updateClassroom, deleteClassroom,
   getClassroomMembers, addClassroomMember, removeClassroomMember,
+  getAdminUsers,
 } from '../../api/admin'
 
 const classrooms = ref([])
@@ -139,9 +156,22 @@ const classForm = ref({ name: '', description: '', level: null, is_active: true 
 
 // 添加成员
 const addMemberVisible = ref(false)
-const addPhone = ref('')
+const selectedUserId = ref(null)
 const addNote = ref('')
 const addingMember = ref(false)
+const userOptions = ref([])
+const searchingUsers = ref(false)
+
+async function searchUsers(query) {
+  if (!query) { userOptions.value = []; return }
+  searchingUsers.value = true
+  try {
+    const res = await getAdminUsers({ search: query, page_size: 20 })
+    userOptions.value = res.results || res
+  } finally {
+    searchingUsers.value = false
+  }
+}
 
 async function loadClassrooms() {
   const res = await getClassrooms()
@@ -222,24 +252,24 @@ async function handleDelete(cls) {
 }
 
 async function handleAddMember() {
-  if (!addPhone.value.trim()) {
-    ElMessage.warning('请填写手机号')
+  if (!selectedUserId.value) {
+    ElMessage.warning('请搜索并选择学员')
     return
   }
   addingMember.value = true
   try {
     const member = await addClassroomMember(selectedClass.value.id, {
-      phone: addPhone.value.trim(),
+      user_id: selectedUserId.value,
       note: addNote.value.trim(),
     })
     members.value.push(member)
-    // update count
     const cls = classrooms.value.find(c => c.id === selectedClass.value.id)
     if (cls) cls.member_count++
     ElMessage.success('添加成功')
     addMemberVisible.value = false
-    addPhone.value = ''
+    selectedUserId.value = null
     addNote.value = ''
+    userOptions.value = []
   } catch (e) {
     ElMessage.error(e.response?.data?.detail || '添加失败')
   } finally {

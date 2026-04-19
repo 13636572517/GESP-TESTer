@@ -131,7 +131,7 @@ onMounted(async () => {
     levels.value = res.results || res
   } catch { /* empty */ }
   try {
-    const res = await getExamTemplates()
+    const res = await getExamTemplates({ page_size: 1000 })
     templates.value = res.results || res
   } catch { /* empty */ }
   try {

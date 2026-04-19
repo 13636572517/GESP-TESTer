@@ -16,9 +16,12 @@
     />
 
     <el-card v-if="currentQuestion" style="margin-top: 16px">
-      <div class="question-header">
-        <el-tag>{{ currentQuestion.type_display }}</el-tag>
-        <span style="margin-left: 8px; color: #6B7280">第 {{ currentIndex + 1 }} 题</span>
+      <div class="question-header" style="display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <el-tag>{{ currentQuestion.type_display }}</el-tag>
+          <span style="margin-left: 8px; color: #6B7280">第 {{ currentIndex + 1 }} 题</span>
+        </div>
+        <FeedbackDialog :question-id="currentQuestion.id" />
       </div>
 
       <div class="question-content" v-html="currentQuestion.content" v-highlight></div>
@@ -91,6 +94,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessageBox } from 'element-plus'
 import { submitAnswer, finishPractice } from '../../api/practice'
+import FeedbackDialog from '../../components/FeedbackDialog.vue'
 
 const route = useRoute()
 const router = useRouter()

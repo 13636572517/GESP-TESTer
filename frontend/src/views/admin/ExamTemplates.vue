@@ -8,7 +8,7 @@
 
     <!-- 试卷列表 -->
     <el-card>
-      <el-table :data="templates" stripe>
+      <el-table :data="pagedTemplates" stripe>
         <el-table-column prop="id" label="ID" width="70" />
         <el-table-column prop="name" label="试卷名称" min-width="160" />
         <el-table-column prop="level_name" label="级别" width="80" />
@@ -55,6 +55,14 @@
           </template>
         </el-table-column>
       </el-table>
+      <el-pagination
+        v-if="templates.length > pageSize"
+        v-model:current-page="currentPage"
+        :page-size="pageSize"
+        :total="templates.length"
+        layout="total, prev, pager, next, jumper"
+        style="margin-top: 16px; justify-content: flex-end; display: flex"
+      />
     </el-card>
 
     <!-- 创建试卷弹窗（全宽大尺寸） -->
@@ -272,6 +280,12 @@ import { getQuestions, getExamTemplates, createExamTemplate, patchExamTemplate, 
 
 // ─── 基础状态 ────────────────────────────────────────
 const templates        = ref([])
+const currentPage      = ref(1)
+const pageSize         = 20
+const pagedTemplates   = computed(() => {
+  const start = (currentPage.value - 1) * pageSize
+  return templates.value.slice(start, start + pageSize)
+})
 const dialogVisible    = ref(false)
 const previewVisible   = ref(false)
 const saving           = ref(false)
@@ -381,7 +395,7 @@ function autoSort() {
 
 // ─── 数据加载 ────────────────────────────────────────
 async function loadTemplates() {
-  const res = await getExamTemplates()
+  const res = await getExamTemplates({ page_size: 1000 })
   templates.value = res.results || res
 }
 
