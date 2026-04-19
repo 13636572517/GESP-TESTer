@@ -173,7 +173,10 @@
           <div class="panel right-panel">
             <div class="panel-head">
               <span class="panel-title">已选题目（{{ selectedQuestions.length }} 题）</span>
-              <el-button size="small" link type="danger" @click="clearSelected">清空</el-button>
+              <div style="display:flex;gap:6px">
+                <el-button size="small" type="primary" @click="autoSort">一键顺序</el-button>
+                <el-button size="small" type="danger" @click="clearSelected">清空</el-button>
+              </div>
             </div>
 
             <div class="panel-list">
@@ -335,10 +338,12 @@ function checkAll() {
   filteredLeft.value.forEach(q => { if (!selectedSet.has(q.id)) checkedSet.add(q.id) })
 }
 function addChecked() {
-  allQuestions.value.forEach(q => {
-    if (checkedSet.has(q.id) && !selectedSet.has(q.id)) {
+  const idMap = new Map(allQuestions.value.map(q => [q.id, q]))
+  checkedSet.forEach(id => {
+    const q = idMap.get(id)
+    if (q && !selectedSet.has(id)) {
       selectedQuestions.value.push(q)
-      selectedSet.add(q.id)
+      selectedSet.add(id)
     }
   })
   checkedSet.clear()
@@ -362,6 +367,16 @@ function moveDown(idx) {
   const arr = selectedQuestions.value
   if (idx >= arr.length - 1) return
   ;[arr[idx], arr[idx + 1]] = [arr[idx + 1], arr[idx]]
+}
+function autoSort() {
+  selectedQuestions.value.sort((a, b) => {
+    // 1. 选择题(1) 优先于判断题(3)
+    if (a.question_type !== b.question_type) return a.question_type - b.question_type
+    // 2. 难度升序：简单(1) < 中等(2) < 困难(3)
+    if (a.difficulty !== b.difficulty) return a.difficulty - b.difficulty
+    // 3. 导入时间升序
+    return new Date(a.created_at) - new Date(b.created_at)
+  })
 }
 
 // ─── 数据加载 ────────────────────────────────────────

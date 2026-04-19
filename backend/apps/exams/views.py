@@ -62,7 +62,7 @@ def start_exam(request):
         )
 
         # 按模板生成答题记录
-        tqs = ExamTemplateQuestion.objects.filter(template=template).select_related('question')
+        tqs = ExamTemplateQuestion.objects.filter(template=template).order_by('sort_order').select_related('question')
         for tq in tqs:
             ExamAnswer.objects.create(
                 record=record,
@@ -146,7 +146,7 @@ def get_exam(request, record_id):
     except ExamRecord.DoesNotExist:
         return Response({'detail': '考试记录不存在'}, status=404)
 
-    answers = record.answers.select_related('question').all()
+    answers = record.answers.select_related('question').order_by('id')
     questions = [a.question for a in answers]
 
     # 已保存的答案

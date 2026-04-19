@@ -38,7 +38,7 @@ EXTRACT_PROMPT = """你是 GESP C++ 竞赛试卷的题目提取专家。请从�
 """
 
 
-def pdf_to_images(pdf_bytes: bytes, dpi: int = 150) -> list[bytes]:
+def pdf_to_images(pdf_bytes: bytes, dpi: int = 100) -> list[bytes]:
     """将 PDF 每页转为 PNG 图片字节列表"""
     doc = fitz.open(stream=pdf_bytes, filetype="pdf")
     images = []
@@ -132,6 +132,7 @@ def extract_from_pdf(pdf_bytes: bytes, level: int, source: str) -> dict:
     client = OpenAI(
         api_key=api_key,
         base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
+        timeout=90,
     )
 
     images = pdf_to_images(pdf_bytes)
