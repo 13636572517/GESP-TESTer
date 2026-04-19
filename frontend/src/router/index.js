@@ -85,6 +85,11 @@ const routes = [
         name: 'UserAISettings',
         component: () => import('../views/profile/UserAISettings.vue'),
       },
+      {
+        path: 'my-feedbacks',
+        name: 'MyFeedbacks',
+        component: () => import('../views/profile/MyFeedbacks.vue'),
+      },
       // 管理端
       {
         path: 'admin/questions',

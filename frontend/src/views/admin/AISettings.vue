@@ -80,6 +80,17 @@
                 </div>
                 <span class="field-hint">用于 AI 题目生成</span>
               </el-form-item>
+              <el-form-item label="PDF识别模型">
+                <div style="display:flex;flex-direction:column;gap:6px">
+                  <el-select v-model="configData.pdf_model" style="width:340px" filterable allow-create default-first-option placeholder="选择模型">
+                    <el-option-group v-for="g in visionModelGroups" :key="g.label" :label="g.label">
+                      <el-option v-for="m in g.models" :key="m.value" :label="m.label" :value="m.value" />
+                    </el-option-group>
+                  </el-select>
+                  <el-input v-model="configData.pdf_model" style="width:340px" placeholder="或手动输入视觉模型 Code，如 qwen-vl-max" clearable />
+                </div>
+                <span class="field-hint">用于 PDF 导入题目识别，需支持图片的视觉模型</span>
+              </el-form-item>
               <el-form-item label="">
                 <el-button type="primary" :loading="saving" @click="handleSave">保存配置</el-button>
                 <span v-if="configData.updated_at" style="margin-left:16px;font-size:12px;color:#909399">
@@ -266,11 +277,30 @@ import { getAIConfig, saveAIConfig, testAIModel, getAIUsageStats } from '../../a
 const activeTab = ref('config')
 
 // ─── 配置 Tab ─────────────────────────────────────────
-const configData      = ref({ api_key_masked: '', has_key: false, key_source: 'none', tag_model: 'qwen-plus', gen_model: 'qwen-plus', updated_at: '' })
+const configData      = ref({ api_key_masked: '', has_key: false, key_source: 'none', tag_model: 'qwen-plus', gen_model: 'qwen-plus', pdf_model: 'qwen-vl-max', updated_at: '' })
 const availableModels = ref([])
 const modelGroups = computed(() => {
   const map = {}
   availableModels.value.forEach(m => {
+    const g = m.group || '其他'
+    if (!map[g]) map[g] = []
+    map[g].push(m)
+  })
+  return Object.entries(map).map(([label, models]) => ({ label, models }))
+})
+
+const VISION_MODELS = [
+  { value: 'qwen-vl-max', label: 'qwen-vl-max（旗舰视觉，推荐）', group: 'Qwen VL' },
+  { value: 'qwen-vl-max-latest', label: 'qwen-vl-max-latest（旗舰视觉最新）', group: 'Qwen VL' },
+  { value: 'qwen-vl-plus', label: 'qwen-vl-plus（均衡视觉）', group: 'Qwen VL' },
+  { value: 'qwen-vl-plus-latest', label: 'qwen-vl-plus-latest（均衡视觉最新）', group: 'Qwen VL' },
+  { value: 'qwen-vl-turbo', label: 'qwen-vl-turbo（快速视觉）', group: 'Qwen VL' },
+  { value: 'qwen2.5-vl-72b-instruct', label: 'qwen2.5-vl-72b-instruct（高精度）', group: 'Qwen2.5 VL' },
+  { value: 'qwen2.5-vl-7b-instruct', label: 'qwen2.5-vl-7b-instruct（轻量）', group: 'Qwen2.5 VL' },
+]
+const visionModelGroups = computed(() => {
+  const map = {}
+  VISION_MODELS.forEach(m => {
     const g = m.group || '其他'
     if (!map[g]) map[g] = []
     map[g].push(m)
@@ -307,6 +337,7 @@ async function handleSave() {
     const payload = {
       tag_model: configData.value.tag_model,
       gen_model: configData.value.gen_model,
+      pdf_model: configData.value.pdf_model,
     }
     if (editingKey.value && newApiKey.value.trim()) {
       payload.api_key = newApiKey.value.trim()
@@ -324,7 +355,7 @@ async function handleSave() {
 async function handleClearKey() {
   saving.value = true
   try {
-    await saveAIConfig({ tag_model: configData.value.tag_model, gen_model: configData.value.gen_model, api_key: '' })
+    await saveAIConfig({ tag_model: configData.value.tag_model, gen_model: configData.value.gen_model, pdf_model: configData.value.pdf_model, api_key: '' })
     ElMessage.success('已清除管理页面设置的 Key，将回退到 .env 文件')
     await loadConfig()
   } finally {

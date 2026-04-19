@@ -50,12 +50,12 @@ def pdf_to_images(pdf_bytes: bytes, dpi: int = 100) -> list[bytes]:
     return images
 
 
-def extract_questions_from_image(client: OpenAI, image_bytes: bytes, level: int, source: str) -> list[dict]:
+def extract_questions_from_image(client: OpenAI, image_bytes: bytes, level: int, source: str, model: str = "qwen-vl-max") -> list[dict]:
     """调用 Qwen-VL 从单张图片提取题目"""
     b64 = base64.b64encode(image_bytes).decode()
 
     response = client.chat.completions.create(
-        model="qwen-vl-max",
+        model=model,
         messages=[
             {
                 "role": "user",
@@ -129,6 +129,15 @@ def extract_from_pdf(pdf_bytes: bytes, level: int, source: str) -> dict:
     if not api_key or api_key.startswith("sk-在这里"):
         raise ValueError("DASHSCOPE_API_KEY 未配置，请在 backend/.env 中填入 API Key")
 
+    from .models import AIConfig
+    try:
+        config = AIConfig.objects.first()
+        pdf_model = config.pdf_model if config and config.pdf_model else 'qwen-vl-max'
+        if config and config.api_key:
+            api_key = config.api_key
+    except Exception:
+        pdf_model = 'qwen-vl-max'
+
     client = OpenAI(
         api_key=api_key,
         base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
@@ -141,7 +150,7 @@ def extract_from_pdf(pdf_bytes: bytes, level: int, source: str) -> dict:
 
     for i, img_bytes in enumerate(images):
         try:
-            qs = extract_questions_from_image(client, img_bytes, level, source)
+            qs = extract_questions_from_image(client, img_bytes, level, source, model=pdf_model)
             all_questions.extend(qs)
         except Exception as e:
             errors.append(f"第{i+1}页处理失败: {str(e)}")

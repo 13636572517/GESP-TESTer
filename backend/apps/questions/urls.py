@@ -21,6 +21,7 @@ urlpatterns = [
     path('admin/ai-usage/', views.ai_usage_stats, name='ai-usage-stats'),
     # 题目反馈
     path('questions/<int:pk>/feedback/', views.submit_feedback, name='question-feedback'),
+    path('questions/my-feedbacks/', views.my_feedbacks, name='my-feedbacks'),
     path('admin/feedbacks/', views.admin_feedback_list, name='admin-feedback-list'),
     path('admin/feedbacks/<int:pk>/', views.admin_feedback_handle, name='admin-feedback-handle'),
 ]

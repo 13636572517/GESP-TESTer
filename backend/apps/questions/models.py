@@ -8,6 +8,7 @@ class AIConfig(models.Model):
     api_key   = models.CharField('API Key', max_length=300, blank=True, default='')
     tag_model = models.CharField('标注模型', max_length=100, default='qwen-plus')
     gen_model = models.CharField('出题模型', max_length=100, default='qwen-plus')
+    pdf_model = models.CharField('PDF识别模型', max_length=100, default='qwen-vl-max')
     updated_at = models.DateTimeField(auto_now=True)
     updated_by = models.ForeignKey(
         User, null=True, blank=True, on_delete=models.SET_NULL, verbose_name='最后修改者'

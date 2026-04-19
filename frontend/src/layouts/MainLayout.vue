@@ -72,6 +72,7 @@
               <el-dropdown-menu>
                 <el-dropdown-item @click="$router.push('/profile')">个人中心</el-dropdown-item>
                 <el-dropdown-item @click="$router.push('/ai-settings')">我的 AI 设置</el-dropdown-item>
+                <el-dropdown-item @click="$router.push('/my-feedbacks')">我的反馈</el-dropdown-item>
                 <template v-if="userStore.isAdmin">
                   <el-dropdown-item divided @click="$router.push('/admin/ai-settings')">管理员 AI 设置</el-dropdown-item>
                 </template>

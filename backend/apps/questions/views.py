@@ -565,6 +565,7 @@ def ai_config_view(request):
             'api_key_masked': masked,
             'tag_model':      cfg.tag_model if cfg else 'qwen-plus',
             'gen_model':      cfg.gen_model if cfg else 'qwen-plus',
+            'pdf_model':      cfg.pdf_model if cfg else 'qwen-vl-max',
             'updated_at':     cfg.updated_at if cfg else None,
             'available_models': AVAILABLE_MODELS,
         })
@@ -579,6 +580,7 @@ def ai_config_view(request):
             cfg.api_key = ''   # 清除，回退到 .env
     cfg.tag_model  = request.data.get('tag_model', cfg.tag_model)
     cfg.gen_model  = request.data.get('gen_model', cfg.gen_model)
+    cfg.pdf_model  = request.data.get('pdf_model', cfg.pdf_model)
     cfg.updated_by = request.user
     cfg.save()
     invalidate_config_cache()
@@ -771,3 +773,26 @@ def admin_feedback_handle(request, pk):
     feedback.save()
 
     return Response({'detail': '已更新'})
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def my_feedbacks(request):
+    """学员：获取自己的反馈列表"""
+    qs = QuestionFeedback.objects.filter(user=request.user).select_related('question').order_by('-created_at')
+    data = []
+    for fb in qs:
+        data.append({
+            'id': fb.id,
+            'question_id': fb.question_id,
+            'question_content': fb.question.content[:100],
+            'feedback_type': fb.feedback_type,
+            'feedback_type_display': fb.get_feedback_type_display(),
+            'content': fb.content,
+            'status': fb.status,
+            'status_display': fb.get_status_display(),
+            'admin_reply': fb.admin_reply,
+            'created_at': fb.created_at.strftime('%Y-%m-%d %H:%M'),
+            'handled_at': fb.handled_at.strftime('%Y-%m-%d %H:%M') if fb.handled_at else None,
+        })
+    return Response({'results': data})
