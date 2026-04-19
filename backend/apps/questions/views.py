@@ -5,6 +5,7 @@ import re
 from html import escape as html_escape
 from django.db.models import Sum, Count, Avg, Q
 from django.db.models.functions import TruncDate
+from django.conf import settings
 from django.http import HttpResponse
 from django.utils import timezone
 from datetime import timedelta
