@@ -27,11 +27,11 @@
         <template v-if="question?.samples?.length">
           <div class="section-title">样例</div>
           <div v-for="(s, i) in question.samples" :key="i" class="sample-block">
-            <div class="sample-row">
+            <div class="sample-half">
               <div class="sample-label">输入</div>
               <pre class="sample-pre">{{ s.input || '(空)' }}</pre>
             </div>
-            <div class="sample-row">
+            <div class="sample-half">
               <div class="sample-label">输出</div>
               <pre class="sample-pre">{{ s.output }}</pre>
             </div>
@@ -62,8 +62,11 @@
     <!-- 右侧编辑器 -->
     <div class="prog-right">
       <div class="editor-toolbar">
-        <el-select v-model="language" size="small" style="width: 180px">
+        <el-select v-model="language" size="small" style="width: 200px">
+          <el-option label="C++ (GCC 7.4.0)" :value="52" />
+          <el-option label="C++ (GCC 8.3.0)" :value="53" />
           <el-option label="C++ (GCC 9.2.0)" :value="54" />
+          <el-option label="C++ (Clang 7.0.1)" :value="76" />
         </el-select>
         <el-button type="primary" :loading="submitting" @click="handleSubmit">提交</el-button>
       </div>
@@ -72,14 +75,25 @@
 
       <!-- 提交结果 -->
       <div v-if="result" class="result-panel">
-        <el-tag :type="statusType(result.status)" size="large">{{ result.status_display }}</el-tag>
-        <span style="margin-left:12px;font-size:13px;color:#6B7280">
-          {{ result.passed_cases }}/{{ result.total_cases }} 测试点通过
-          <template v-if="result.time_used"> · {{ (result.time_used * 1000).toFixed(0) }}ms</template>
-          <template v-if="result.memory_used"> · {{ (result.memory_used / 1024).toFixed(1) }}MB</template>
-        </span>
+        <div class="result-summary">
+          <el-tag :type="statusType(result.status)" size="large">{{ result.status_display }}</el-tag>
+          <span class="result-info">
+            {{ result.passed_cases }}/{{ result.total_cases }} 测试点通过
+            <template v-if="result.time_used"> · {{ (result.time_used * 1000).toFixed(0) }}ms</template>
+            <template v-if="result.memory_used"> · {{ (result.memory_used / 1024).toFixed(1) }}MB</template>
+          </span>
+        </div>
+        <!-- 测试点详情 -->
+        <div v-if="result.case_results?.length" class="case-list">
+          <span
+            v-for="c in result.case_results"
+            :key="c.index"
+            :class="['case-badge', `case-${c.label.toLowerCase()}`]"
+            :title="`#${c.index} ${c.label}${c.time ? ' ' + (c.time * 1000).toFixed(0) + 'ms' : ''}`"
+          >#{{ c.index }} {{ c.label }}</span>
+        </div>
         <pre v-if="result.compile_output" class="result-msg">{{ result.compile_output }}</pre>
-        <pre v-if="result.stderr" class="result-msg">{{ result.stderr }}</pre>
+        <pre v-if="result.stderr && !result.compile_output" class="result-msg">{{ result.stderr }}</pre>
       </div>
     </div>
   </div>
@@ -101,6 +115,17 @@ const language = ref(54)
 const editorContainer = ref(null)
 let editor = null
 
+const STORAGE_KEY = () => `prog_code_${route.params.id}`
+const DEFAULT_CODE = '#include <iostream>\nusing namespace std;\n\nint main() {\n    \n    return 0;\n}'
+
+function saveCode() {
+  localStorage.setItem(STORAGE_KEY(), editor?.getValue() ?? '')
+}
+
+function loadSavedCode() {
+  return localStorage.getItem(STORAGE_KEY()) || DEFAULT_CODE
+}
+
 function diffType(d) { return { 1: 'success', 2: 'warning', 3: 'danger' }[d] ?? '' }
 function statusType(s) {
   return { 3: 'success', 4: 'danger', 5: 'warning', 6: 'warning', 7: 'danger', 8: 'danger', 13: 'info' }[s] ?? 'info'
@@ -117,8 +142,8 @@ async function loadQuestion() {
       request.get(`/programming/questions/${route.params.id}/`),
       request.get(`/programming/questions/${route.params.id}/submissions/`),
     ])
-    question.value = qRes.data
-    submissions.value = sRes.data
+    question.value = qRes
+    submissions.value = sRes
   } finally {
     loading.value = false
   }
@@ -132,10 +157,10 @@ async function handleSubmit() {
   try {
     const res = await request.post(`/programming/questions/${route.params.id}/submit/`, {
       code, language_id: language.value,
-    })
-    result.value = res.data
+    }, { timeout: 120000 })
+    result.value = res
     const sRes = await request.get(`/programming/questions/${route.params.id}/submissions/`)
-    submissions.value = sRes.data
+    submissions.value = sRes
   } finally {
     submitting.value = false
   }
@@ -144,7 +169,7 @@ async function handleSubmit() {
 onMounted(async () => {
   await loadQuestion()
   editor = monaco.editor.create(editorContainer.value, {
-    value: '#include <iostream>\nusing namespace std;\n\nint main() {\n    \n    return 0;\n}',
+    value: loadSavedCode(),
     language: 'cpp',
     theme: 'vs',
     fontSize: 14,
@@ -152,6 +177,7 @@ onMounted(async () => {
     automaticLayout: true,
     scrollBeyondLastLine: false,
   })
+  editor.onDidChangeModelContent(saveCode)
 })
 
 onUnmounted(() => editor?.dispose())
@@ -194,14 +220,19 @@ onUnmounted(() => editor?.dispose())
   color: #1865F2;
 }
 .sample-block {
-  background: #F7F8FA;
-  border-radius: 8px;
-  padding: 12px;
+  display: flex;
+  gap: 8px;
   margin-bottom: 8px;
 }
-.sample-row { display: flex; gap: 12px; margin-bottom: 6px; }
-.sample-label { font-weight: 600; min-width: 32px; }
-.sample-pre { margin: 0; font-family: monospace; white-space: pre-wrap; }
+.sample-half {
+  flex: 1;
+  background: #F7F8FA;
+  border-radius: 6px;
+  padding: 8px 10px;
+  min-width: 0;
+}
+.sample-label { font-weight: 600; font-size: 12px; color: #6B7280; margin-bottom: 4px; }
+.sample-pre { margin: 0; font-family: monospace; font-size: 13px; white-space: pre-wrap; word-break: break-all; }
 .editor-toolbar {
   display: flex;
   align-items: center;
@@ -211,16 +242,36 @@ onUnmounted(() => editor?.dispose())
 }
 .editor-container { flex: 1; }
 .result-panel {
-  padding: 12px 16px;
+  padding: 10px 16px;
   border-top: 1px solid #E5E7EB;
   background: #F7F8FA;
+  max-height: 200px;
+  overflow-y: auto;
 }
+.result-summary { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.result-info { font-size: 13px; color: #6B7280; }
+.case-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+.case-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 4px;
+  cursor: default;
+  white-space: nowrap;
+}
+.case-ac   { background: #D1FAE5; color: #065F46; }
+.case-wa   { background: #FEE2E2; color: #991B1B; }
+.case-tle  { background: #FEF3C7; color: #92400E; }
+.case-mle  { background: #FEF3C7; color: #92400E; }
+.case-re   { background: #FEE2E2; color: #991B1B; }
+.case-ce   { background: #E0E7FF; color: #3730A3; }
+.case-err  { background: #F3F4F6; color: #6B7280; }
 .result-msg {
-  margin: 8px 0 0;
+  margin: 4px 0 0;
   font-size: 12px;
   color: #EF4444;
   white-space: pre-wrap;
-  max-height: 120px;
+  max-height: 80px;
   overflow-y: auto;
 }
 </style>

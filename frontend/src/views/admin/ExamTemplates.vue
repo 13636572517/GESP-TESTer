@@ -3,12 +3,21 @@
     <h1 class="page-title">试卷管理</h1>
 
     <el-card style="margin-bottom: 16px">
-      <el-button type="primary" :icon="Plus" @click="showCreateDialog">创建试卷</el-button>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <el-select v-model="filterLevel" clearable placeholder="全部级别" style="width:110px" @change="loadTemplates">
+          <el-option v-for="i in 8" :key="i" :label="`${i}级`" :value="i" />
+        </el-select>
+        <el-button type="primary" :icon="Plus" @click="showCreateDialog">创建试卷</el-button>
+        <el-button @click="handleExport">导出选中</el-button>
+        <el-button @click="handleExportAll">导出全部</el-button>
+        <el-button @click="importDialogVisible = true">导入</el-button>
+      </div>
     </el-card>
 
     <!-- 试卷列表 -->
     <el-card>
-      <el-table :data="pagedTemplates" stripe>
+      <el-table :data="pagedTemplates" stripe @selection-change="handleSelectionChange">
+        <el-table-column type="selection" width="42" />
         <el-table-column prop="id" label="ID" width="70" />
         <el-table-column prop="name" label="试卷名称" min-width="160" />
         <el-table-column prop="level_name" label="级别" width="80" />
@@ -269,6 +278,23 @@
         <el-button @click="previewVisible = false">关闭</el-button>
       </template>
     </el-dialog>
+
+    <!-- 导入对话框 -->
+    <el-dialog v-model="importDialogVisible" title="导入试卷" width="560px">
+      <el-input v-model="importJson" type="textarea" :rows="10" placeholder="将导出的 JSON 内容粘贴到此处" />
+      <div v-if="importResult" style="margin-top:12px">
+        <el-alert :type="importResult.error_count > 0 ? 'warning' : 'success'" :closable="false">
+          新增 {{ importResult.created_count }} 份，覆盖更新 {{ importResult.updated_count ?? 0 }} 份，失败 {{ importResult.error_count }} 份
+        </el-alert>
+        <div v-for="err in importResult.errors" :key="err.index" style="font-size:12px;color:#f56c6c;margin-top:4px">
+          第 {{ err.index }} 条「{{ err.name }}」：{{ err.error }}
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="importDialogVisible = false">关闭</el-button>
+        <el-button type="primary" :loading="importing" @click="handleImport">开始导入</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -276,10 +302,11 @@
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Plus, Delete, ArrowUp, ArrowDown, View } from '@element-plus/icons-vue'
-import { getQuestions, getExamTemplates, createExamTemplate, patchExamTemplate, deleteExamTemplate } from '../../api/admin'
+import { getQuestions, getExamTemplates, createExamTemplate, patchExamTemplate, deleteExamTemplate, exportExamTemplates, importExamTemplates } from '../../api/admin'
 
 // ─── 基础状态 ────────────────────────────────────────
 const templates        = ref([])
+const filterLevel      = ref(null)
 const currentPage      = ref(1)
 const pageSize         = 20
 const pagedTemplates   = computed(() => {
@@ -395,7 +422,9 @@ function autoSort() {
 
 // ─── 数据加载 ────────────────────────────────────────
 async function loadTemplates() {
-  const res = await getExamTemplates({ page_size: 1000 })
+  const params = { page_size: 1000 }
+  if (filterLevel.value) params.level = filterLevel.value
+  const res = await getExamTemplates(params)
   templates.value = res.results || res
 }
 
@@ -459,6 +488,51 @@ async function handleCreate() {
   } finally {
     saving.value = false
   }
+}
+
+// ─── 导出 / 导入 ─────────────────────────────────────
+const selectedRows = ref([])
+const importDialogVisible = ref(false)
+const importJson = ref('')
+const importing = ref(false)
+const importResult = ref(null)
+
+function handleSelectionChange(rows) {
+  selectedRows.value = rows
+}
+
+function triggerBlobDownload(promise, filename) {
+  promise.then(res => {
+    const url = URL.createObjectURL(new Blob([res.data]))
+    const a = document.createElement('a')
+    a.href = url; a.download = filename; a.click()
+    URL.revokeObjectURL(url)
+    ElMessage.success('下载完成')
+  }).catch(() => ElMessage.error('下载失败'))
+}
+
+function handleExport() {
+  const ids = selectedRows.value.map(r => r.id)
+  if (!ids.length) return ElMessage.warning('请先勾选要导出的试卷')
+  triggerBlobDownload(exportExamTemplates(ids), 'exam_templates.json')
+}
+
+function handleExportAll() {
+  triggerBlobDownload(exportExamTemplates([]), 'exam_templates.json')
+}
+
+async function handleImport() {
+  if (!importJson.value.trim()) return ElMessage.warning('请粘贴JSON数据')
+  let parsed
+  try { parsed = JSON.parse(importJson.value) } catch { return ElMessage.error('JSON格式错误') }
+  if (!Array.isArray(parsed)) return ElMessage.error('需要数组格式')
+  importing.value = true
+  importResult.value = null
+  try {
+    const res = await importExamTemplates(parsed)
+    importResult.value = res
+    if (res.created_count > 0 || res.updated_count > 0) { ElMessage.success(`新增 ${res.created_count} 份，更新 ${res.updated_count ?? 0} 份`); loadTemplates() }
+  } catch { ElMessage.error('导入失败') } finally { importing.value = false }
 }
 
 onMounted(loadTemplates)

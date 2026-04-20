@@ -27,7 +27,10 @@
     </el-card>
 
     <!-- 操作栏 -->
-    <div style="display: flex; justify-content: flex-end; margin-bottom: 12px">
+    <div style="display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 12px">
+      <el-button @click="handleExport">导出选中</el-button>
+      <el-button @click="handleExportAll">导出全部</el-button>
+      <el-button @click="importDialogVisible = true">导入</el-button>
       <el-button type="primary" @click="showCreate">
         <el-icon><Plus /></el-icon> 新建账号
       </el-button>
@@ -35,7 +38,8 @@
 
     <!-- 用户列表 -->
     <el-card>
-      <el-table :data="users" stripe v-loading="loading">
+      <el-table :data="users" stripe v-loading="loading" @selection-change="handleSelectionChange">
+        <el-table-column type="selection" width="42" />
         <el-table-column prop="id" label="ID" width="60" />
         <el-table-column label="头像" width="56">
           <template #default="{ row }">
@@ -126,6 +130,38 @@
       </template>
     </el-dialog>
 
+    <!-- 导入弹窗 -->
+    <el-dialog v-model="importDialogVisible" title="批量导入会员" width="500px">
+      <el-alert type="info" :closable="false" style="margin-bottom:12px">
+        CSV格式：用户名、手机号、昵称、学习级别、是否管理员（是/否）<br>
+        已存在的用户名自动跳过。
+      </el-alert>
+      <el-form label-width="90px">
+        <el-form-item label="默认密码">
+          <el-input v-model="defaultPassword" placeholder="导入账号的初始密码（至少6位）" style="width:200px" />
+        </el-form-item>
+        <el-form-item label="CSV文件">
+          <el-upload :auto-upload="false" :on-change="onImportFileChange" :show-file-list="false" accept=".csv">
+            <el-button>选择文件</el-button>
+          </el-upload>
+          <span v-if="importFile" style="margin-left:8px;font-size:12px;color:#6B7280">{{ importFile.name }}</span>
+        </el-form-item>
+      </el-form>
+      <div v-if="importResult" style="margin-top:8px">
+        <el-alert :type="importResult.error_count > 0 ? 'warning' : 'success'" :closable="false">
+          创建 {{ importResult.created_count }} 人，跳过 {{ importResult.skip_count }} 人，失败 {{ importResult.error_count }} 人
+          <span v-if="importResult.created_count > 0">（初始密码：{{ importResult.default_password }}）</span>
+        </el-alert>
+        <div v-for="err in importResult.errors" :key="err.row" style="font-size:12px;color:#f56c6c;margin-top:4px">
+          第 {{ err.row }} 行：{{ err.error }}
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="importDialogVisible = false">关闭</el-button>
+        <el-button type="primary" :loading="importing" :disabled="!importFile" @click="handleImport">开始导入</el-button>
+      </template>
+    </el-dialog>
+
     <!-- 新建账号弹窗 -->
     <el-dialog v-model="createVisible" title="新建账号" width="420px">
       <el-form :model="createForm" label-width="90px">
@@ -159,7 +195,7 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Plus } from '@element-plus/icons-vue'
-import { getAdminUsers, createAdminUser, updateAdminUser, deleteAdminUser } from '../../api/admin'
+import { getAdminUsers, createAdminUser, updateAdminUser, deleteAdminUser, exportAdminUsers, importAdminUsers } from '../../api/admin'
 
 const users = ref([])
 const loading = ref(false)
@@ -256,6 +292,52 @@ async function handleDelete(row) {
   await deleteAdminUser(row.id)
   ElMessage.success('已删除')
   loadUsers()
+}
+
+// ─── 导出 / 导入 ─────────────────────────────────────
+const selectedRows = ref([])
+const importDialogVisible = ref(false)
+const importFile = ref(null)
+const importing = ref(false)
+const importResult = ref(null)
+const defaultPassword = ref('gesp123456')
+
+function handleSelectionChange(rows) { selectedRows.value = rows }
+
+function triggerBlobDownload(promise, filename) {
+  promise.then(res => {
+    const url = URL.createObjectURL(new Blob([res.data]))
+    const a = document.createElement('a')
+    a.href = url; a.download = filename; a.click()
+    URL.revokeObjectURL(url)
+    ElMessage.success('下载完成')
+  }).catch(() => ElMessage.error('下载失败'))
+}
+
+function handleExport() {
+  const ids = selectedRows.value.map(r => r.id)
+  if (!ids.length) return ElMessage.warning('请先勾选要导出的会员')
+  triggerBlobDownload(exportAdminUsers(ids), 'members.csv')
+}
+
+function handleExportAll() {
+  triggerBlobDownload(exportAdminUsers([]), 'members.csv')
+}
+
+function onImportFileChange(file) { importFile.value = file.raw }
+
+async function handleImport() {
+  if (!importFile.value) return
+  importing.value = true
+  importResult.value = null
+  try {
+    const fd = new FormData()
+    fd.append('file', importFile.value)
+    fd.append('default_password', defaultPassword.value || 'gesp123456')
+    const res = await importAdminUsers(fd)
+    importResult.value = res
+    if (res.created_count > 0) { ElMessage.success(`成功导入 ${res.created_count} 名会员`); loadUsers() }
+  } catch { ElMessage.error('导入失败') } finally { importing.value = false }
 }
 
 function formatDate(str) {

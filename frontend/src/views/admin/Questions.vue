@@ -315,7 +315,7 @@
       <div v-if="csvResult" style="margin-top: 16px">
         <el-alert :type="csvResult.error_count > 0 ? 'warning' : 'success'" :closable="false">
           <template #title>
-            成功导入 {{ csvResult.created_count }} 题，失败 {{ csvResult.error_count }} 题
+            新增 {{ csvResult.created_count }} 题，覆盖更新 {{ csvResult.updated_count ?? 0 }} 题，失败 {{ csvResult.error_count }} 题
           </template>
         </el-alert>
         <div v-if="csvResult.errors?.length > 0" style="margin-top: 8px; max-height: 160px; overflow-y: auto">
@@ -354,7 +354,7 @@
       />
       <div v-if="jsonResult" style="margin-top: 12px">
         <el-alert :type="jsonResult.error_count > 0 ? 'warning' : 'success'" :closable="false">
-          <template #title>成功导入 {{ jsonResult.created_count }} 题，失败 {{ jsonResult.error_count }} 题</template>
+          <template #title>新增 {{ jsonResult.created_count }} 题，覆盖更新 {{ jsonResult.updated_count ?? 0 }} 题，失败 {{ jsonResult.error_count }} 题</template>
         </el-alert>
         <div v-if="jsonResult.errors?.length > 0" style="margin-top: 8px; max-height: 160px; overflow-y: auto">
           <div v-for="err in jsonResult.errors" :key="err.index" style="font-size: 13px; color: #f56c6c; padding: 2px 0">

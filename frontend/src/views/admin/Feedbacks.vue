@@ -36,9 +36,8 @@
         <el-table-column label="提交时间" prop="created_at" width="140" />
         <el-table-column label="操作" width="160" fixed="right">
           <template #default="{ row }">
-            <el-button link type="primary" size="small" @click="openDetail(row)">处理</el-button>
-            <el-divider direction="vertical" />
-            <el-button link type="primary" size="small" @click="openEditQuestion(row)">修正题目</el-button>
+            <el-button class="fb-btn fb-handle" size="small" @click="openDetail(row)">处理</el-button>
+            <el-button class="fb-btn fb-edit" size="small" @click="openEditQuestion(row)">修正题目</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -214,3 +213,25 @@ async function saveQuestion() {
 
 onMounted(loadFeedbacks)
 </script>
+
+<style scoped>
+.fb-btn {
+  padding: 2px 8px !important;
+  height: 24px !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  border-radius: 4px !important;
+}
+.fb-handle {
+  color: #fff !important;
+  background: #1865F2 !important;
+  border-color: #1865F2 !important;
+}
+.fb-handle:hover { background: #1551C9 !important; border-color: #1551C9 !important; }
+.fb-edit {
+  color: #fff !important;
+  background: #E6820A !important;
+  border-color: #E6820A !important;
+}
+.fb-edit:hover { background: #C96E00 !important; border-color: #C96E00 !important; }
+</style>

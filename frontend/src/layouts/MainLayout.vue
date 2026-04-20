@@ -56,6 +56,7 @@
           <el-menu-item index="/admin/classes">班级管理</el-menu-item>
           <el-menu-item index="/admin/ai-questions">AI 题目工具</el-menu-item>
           <el-menu-item index="/admin/feedbacks">题目反馈</el-menu-item>
+          <el-menu-item index="/admin/programming">编程题管理</el-menu-item>
         </el-sub-menu>
       </el-menu>
     </el-aside>

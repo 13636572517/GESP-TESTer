@@ -61,7 +61,7 @@ async function load() {
     const params = {}
     if (filterLevel.value) params.level = filterLevel.value
     const res = await request.get('/programming/questions/', { params })
-    questions.value = res.data
+    questions.value = res
   } finally {
     loading.value = false
   }

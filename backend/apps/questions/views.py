@@ -134,17 +134,36 @@ def batch_create_questions(request):
         return Response({'detail': '请提供题目数据'}, status=400)
 
     created = []
+    updated = []
     errors = []
     for i, q_data in enumerate(questions_data):
-        serializer = QuestionCreateSerializer(data=q_data, context={'request': request})
-        if serializer.is_valid():
-            serializer.save()
-            created.append(serializer.data)
+        q_data = dict(q_data)
+        q_id = q_data.pop('id', None)
+        existing = None
+        if q_id:
+            try:
+                existing = Question.objects.get(pk=int(q_id))
+            except (Question.DoesNotExist, ValueError):
+                existing = None
+
+        if existing:
+            serializer = QuestionCreateSerializer(existing, data=q_data, context={'request': request})
+            if serializer.is_valid():
+                serializer.save()
+                updated.append(serializer.data)
+            else:
+                errors.append({'index': i, 'errors': serializer.errors})
         else:
-            errors.append({'index': i, 'errors': serializer.errors})
+            serializer = QuestionCreateSerializer(data=q_data, context={'request': request})
+            if serializer.is_valid():
+                serializer.save()
+                created.append(serializer.data)
+            else:
+                errors.append({'index': i, 'errors': serializer.errors})
 
     return Response({
         'created_count': len(created),
+        'updated_count': len(updated),
         'error_count': len(errors),
         'errors': errors,
     })
@@ -176,6 +195,7 @@ def import_csv(request):
     DIFF_MAP = {'简单': 1, '中等': 2, '困难': 3, '容易': 1}
 
     created = []
+    updated = []
     errors = []
 
     for i, row in enumerate(reader):
@@ -214,17 +234,35 @@ def import_csv(request):
                 'source': row.get('来源', row.get('source', '')).strip(),
             }
 
-            serializer = QuestionCreateSerializer(data=q_data, context={'request': request})
-            if serializer.is_valid():
-                serializer.save()
-                created.append(i)
+            # 有ID则覆盖更新，否则新增
+            q_id_raw = row.get('ID', row.get('id', '')).strip()
+            existing = None
+            if q_id_raw:
+                try:
+                    existing = Question.objects.get(pk=int(q_id_raw))
+                except (Question.DoesNotExist, ValueError):
+                    existing = None
+
+            if existing:
+                serializer = QuestionCreateSerializer(existing, data=q_data, context={'request': request})
+                if serializer.is_valid():
+                    serializer.save()
+                    updated.append(i)
+                else:
+                    errors.append({'row': i + 2, 'errors': serializer.errors})
             else:
-                errors.append({'row': i + 2, 'errors': serializer.errors})
+                serializer = QuestionCreateSerializer(data=q_data, context={'request': request})
+                if serializer.is_valid():
+                    serializer.save()
+                    created.append(i)
+                else:
+                    errors.append({'row': i + 2, 'errors': serializer.errors})
         except Exception as e:
             errors.append({'row': i + 2, 'errors': str(e)})
 
     return Response({
         'created_count': len(created),
+        'updated_count': len(updated),
         'error_count': len(errors),
         'errors': errors[:50],
     })
@@ -250,12 +288,9 @@ def export_questions(request):
         qs = qs.filter(difficulty=difficulty)
 
     if fmt == 'csv':
-        response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
-        response['Content-Disposition'] = 'attachment; filename="questions.csv"'
-        response.write('\ufeff')  # BOM for Excel compatibility
-
-        writer = csv.writer(response)
-        writer.writerow(['级别', '题型', '难度', '题目', '选项A', '选项B', '选项C', '选项D', '选项E', '选项F', '答案', '解析', '来源'])
+        buf = io.StringIO()
+        writer = csv.writer(buf)
+        writer.writerow(['ID', '级别', '题型', '难度', '题目', '选项A', '选项B', '选项C', '选项D', '选项E', '选项F', '答案', '解析', '来源'])
 
         TYPE_NAMES = {1: '单选题', 2: '多选题', 3: '判断题'}
         DIFF_NAMES = {1: '简单', 2: '中等', 3: '困难'}
@@ -264,6 +299,7 @@ def export_questions(request):
             opts = q.options or []
             opt_map = {o['key']: o['text'] for o in opts}
             writer.writerow([
+                q.id,
                 f'{q.level_id}级',
                 TYPE_NAMES.get(q.question_type, ''),
                 DIFF_NAMES.get(q.difficulty, ''),
@@ -275,12 +311,15 @@ def export_questions(request):
                 q.source or '',
             ])
 
+        response = HttpResponse(buf.getvalue().encode('utf-8-sig'), content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = 'attachment; filename="questions.csv"'
         return response
     else:
         # JSON导出
         data = []
         for q in qs:
             data.append({
+                'id': q.id,
                 'level': q.level_id,
                 'question_type': q.question_type,
                 'difficulty': q.difficulty,
@@ -303,19 +342,16 @@ def export_questions(request):
 @permission_classes([AdminPermission])
 def download_csv_template(request):
     """下载CSV导入模板"""
-    response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
-    response['Content-Disposition'] = 'attachment; filename="import_template.csv"'
-    response.write('\ufeff')  # BOM
-
-    writer = csv.writer(response)
+    buf = io.StringIO()
+    writer = csv.writer(buf)
     writer.writerow(['级别', '题型', '难度', '题目', '选项A', '选项B', '选项C', '选项D', '选项E', '选项F', '答案', '解析', '来源'])
-    # 写入示例行（展示代码标记语法）
     writer.writerow(['1级', '单选题', '简单', 'C++中，以下哪个是正确的输出语句？', 'print("hello")', 'cout<<"hello"', 'echo "hello"', 'printf "hello"', '', '', 'B', 'C++使用cout进行标准输出', '模拟题'])
     writer.writerow(['2级', '判断题', '中等', 'C++程序的执行从main函数开始。', '', '', '', '', '', '', 'T', '每个C++程序都必须有一个main函数', '模拟题'])
     writer.writerow(['3级', '多选题', '困难', '以下哪些是STL中的关联容器？', 'set', 'map', 'vector', 'unordered_map', '', '', 'ABD', 'set、map、unordered_map是关联容器', '模拟题'])
-    writer.writerow(['1级', '单选题', '中等', '以下程序的输出是什么？```int a = 10, b = 3;\ncout << a / b;```', '3', '3.33', '10', '0', '', '', 'A', '整数除法向下取整', '模拟题'])
-    writer.writerow(['2级', '单选题', '简单', '下面代码编译会报错，`int a, b; a=3，b = 4; cout << a;` 可能的原因是？', '中文逗号', '缺分号', '变量未定义', '语法错误', '', '', 'A', '中文逗号是无效字符', '模拟题'])
-
+    writer.writerow(['1级', '单选题', '中等', '以下程序的输出是什么？```int a = 10, b = 3; cout << a / b;```', '3', '3.33', '10', '0', '', '', 'A', '整数除法向下取整', '模拟题'])
+    writer.writerow(['2级', '单选题', '简单', '代码 `int a, b; cout << a;` 中a的值是？', '随机', '0', '1', '编译错误', '', '', 'A', '未初始化变量的值不确定', '模拟题'])
+    response = HttpResponse(buf.getvalue().encode('utf-8-sig'), content_type='text/csv; charset=utf-8')
+    response['Content-Disposition'] = 'attachment; filename="import_template.csv"'
     return response
 
 

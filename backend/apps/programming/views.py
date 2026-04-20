@@ -1,3 +1,4 @@
+import base64
 import requests
 from django.conf import settings
 from rest_framework.decorators import api_view, permission_classes
@@ -15,7 +16,7 @@ JUDGE0_STATUS_MAP = {
     3: CodeSubmission.STATUS_ACCEPTED,
     4: CodeSubmission.STATUS_WRONG,
     5: CodeSubmission.STATUS_TLE,
-    6: CodeSubmission.STATUS_MLE,
+    6: CodeSubmission.STATUS_CE,
     7: CodeSubmission.STATUS_RE,
     8: CodeSubmission.STATUS_RE,
     9: CodeSubmission.STATUS_RE,
@@ -23,7 +24,7 @@ JUDGE0_STATUS_MAP = {
     11: CodeSubmission.STATUS_RE,
     12: CodeSubmission.STATUS_RE,
     13: CodeSubmission.STATUS_ERROR,
-    14: CodeSubmission.STATUS_CE,
+    14: CodeSubmission.STATUS_RE,
 }
 
 
@@ -99,34 +100,82 @@ def submit_code(request, pk):
         total_cases=len(test_cases),
     )
 
+    STATUS_LABEL = {
+        CodeSubmission.STATUS_ACCEPTED: 'AC',
+        CodeSubmission.STATUS_WRONG: 'WA',
+        CodeSubmission.STATUS_TLE: 'TLE',
+        CodeSubmission.STATUS_MLE: 'MLE',
+        CodeSubmission.STATUS_RE: 'RE',
+        CodeSubmission.STATUS_CE: 'CE',
+        CodeSubmission.STATUS_ERROR: 'ERR',
+    }
+
     passed = 0
     last_result = {}
     worst_status = CodeSubmission.STATUS_ACCEPTED
+    case_results = []
+    first_error = None
 
-    for tc in test_cases:
+    for i, tc in enumerate(test_cases):
+        def b64(s):
+            return base64.b64encode(s.encode()).decode() if s else ''
+
+        def decode(s):
+            try:
+                return base64.b64decode(s).decode('utf-8', errors='replace') if s else ''
+            except Exception:
+                return s or ''
+
         try:
             resp = requests.post(
-                f'{JUDGE0_URL}/submissions?wait=true',
+                f'{JUDGE0_URL}/submissions?wait=true&base64_encoded=true',
                 json={
                     'language_id': language_id,
-                    'source_code': code,
-                    'stdin': tc.input_data,
-                    'expected_output': tc.expected_output,
+                    'source_code': b64(code),
+                    'stdin': b64(tc.input_data),
+                    'expected_output': b64(tc.expected_output),
                     'cpu_time_limit': question.time_limit / 1000,
                     'memory_limit': question.memory_limit * 1024,
                 },
-                timeout=30,
+                timeout=60,
+                proxies={'http': None, 'https': None},
             )
-            result = resp.json()
+            raw = resp.json()
+            result = {
+                **raw,
+                'stdout': decode(raw.get('stdout')),
+                'stderr': decode(raw.get('stderr')),
+                'compile_output': decode(raw.get('compile_output')),
+            }
         except Exception as e:
+            first_error = str(e)
             submission.status = CodeSubmission.STATUS_ERROR
-            submission.stderr = str(e)
+            submission.stderr = first_error
             submission.save()
-            return Response({'id': submission.id, 'status': submission.status})
+            return Response({
+                'id': submission.id,
+                'status': submission.status,
+                'status_display': submission.get_status_display(),
+                'passed_cases': 0,
+                'total_cases': len(test_cases),
+                'time_used': None,
+                'memory_used': None,
+                'compile_output': '',
+                'stderr': first_error,
+                'case_results': [],
+            })
 
         judge0_status = result.get('status', {}).get('id', 13)
         mapped = JUDGE0_STATUS_MAP.get(judge0_status, CodeSubmission.STATUS_ERROR)
         last_result = result
+
+        case_results.append({
+            'index': i + 1,
+            'status': mapped,
+            'label': STATUS_LABEL.get(mapped, 'ERR'),
+            'time': result.get('time'),
+            'memory': result.get('memory'),
+        })
 
         if mapped == CodeSubmission.STATUS_ACCEPTED:
             passed += 1
@@ -134,6 +183,8 @@ def submit_code(request, pk):
             if worst_status == CodeSubmission.STATUS_ACCEPTED:
                 worst_status = mapped
             if mapped == CodeSubmission.STATUS_CE:
+                for j in range(i + 1, len(test_cases)):
+                    case_results.append({'index': j + 1, 'status': CodeSubmission.STATUS_CE, 'label': 'CE', 'time': None, 'memory': None})
                 break
 
     final_status = CodeSubmission.STATUS_ACCEPTED if passed == len(test_cases) else worst_status
@@ -157,6 +208,7 @@ def submit_code(request, pk):
         'memory_used': submission.memory_used,
         'compile_output': submission.compile_output,
         'stderr': submission.stderr,
+        'case_results': case_results,
     })
 
 

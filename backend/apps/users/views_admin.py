@@ -1,5 +1,8 @@
+import csv
+import io
 from django.contrib.auth.models import User
 from django.db.models import Q
+from django.http import HttpResponse
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -112,6 +115,101 @@ def user_detail(request, pk):
 
     serializer = AdminUserSerializer(user, context={'request': request})
     return Response(serializer.data)
+
+
+@api_view(['GET'])
+@permission_classes([AdminPermission])
+def export_users(request):
+    """导出会员为CSV"""
+    ids = request.query_params.get('ids', '')
+    qs = User.objects.select_related('profile').order_by('id')
+    if ids:
+        id_list = [int(i) for i in ids.split(',') if i.strip().isdigit()]
+        qs = qs.filter(id__in=id_list)
+
+    buf = io.StringIO()
+    writer = csv.writer(buf)
+    writer.writerow(['用户名', '手机号', '昵称', '学习级别', '是否管理员'])
+    for u in qs:
+        p = getattr(u, 'profile', None)
+        writer.writerow([
+            u.username or '',
+            (p.phone if p else '') or '',
+            (p.nickname if p else '') or u.username or '',
+            p.current_level if p else 1,
+            '是' if (p and p.is_admin) else '否',
+        ])
+
+    response = HttpResponse(buf.getvalue().encode('utf-8-sig'), content_type='text/csv; charset=utf-8')
+    response['Content-Disposition'] = 'attachment; filename="members.csv"'
+    return response
+
+
+@api_view(['POST'])
+@permission_classes([AdminPermission])
+def import_users(request):
+    """从CSV批量导入会员"""
+    file = request.FILES.get('file')
+    if not file:
+        return Response({'detail': '请上传CSV文件'}, status=400)
+
+    try:
+        content = file.read().decode('utf-8-sig')
+    except UnicodeDecodeError:
+        try:
+            file.seek(0)
+            content = file.read().decode('gbk')
+        except UnicodeDecodeError:
+            return Response({'detail': '文件编码不支持'}, status=400)
+
+    default_password = request.data.get('default_password', 'gesp123456')
+    reader = csv.DictReader(io.StringIO(content))
+
+    created_count = 0
+    skip_count = 0
+    errors = []
+
+    for i, row in enumerate(reader):
+        username = (row.get('用户名', '') or '').strip()
+        phone = (row.get('手机号', '') or '').strip()
+        nickname = (row.get('昵称', '') or '').strip()
+        level_raw = (row.get('学习级别', '1') or '1').strip()
+        is_admin_raw = (row.get('是否管理员', '否') or '否').strip()
+
+        try:
+            current_level = int(level_raw)
+        except ValueError:
+            current_level = 1
+        is_admin_flag = is_admin_raw in ('是', 'True', 'true', '1', 'yes')
+
+        if not username:
+            errors.append({'row': i + 2, 'error': '用户名不能为空'})
+            continue
+
+        if User.objects.filter(username=username).exists():
+            skip_count += 1
+            continue
+
+        try:
+            u = User.objects.create_user(username=username, password=default_password)
+            UserProfile.objects.create(
+                user=u,
+                phone=phone or None,
+                nickname=nickname or username,
+                current_level=max(1, min(8, current_level)),
+                is_admin=is_admin_flag,
+            )
+            created_count += 1
+        except Exception as e:
+            errors.append({'row': i + 2, 'error': str(e)})
+
+    return Response({
+        'created_count': created_count,
+        'skip_count': skip_count,
+        'error_count': len(errors),
+        'errors': errors[:20],
+        'default_password': default_password,
+    })
 
 
 # ── 班级管理 ──────────────────────────────────────────────────

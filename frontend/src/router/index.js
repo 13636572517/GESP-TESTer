@@ -155,6 +155,12 @@ const routes = [
         component: () => import('../views/admin/Feedbacks.vue'),
         meta: { admin: true },
       },
+      {
+        path: 'admin/programming',
+        name: 'AdminProgramming',
+        component: () => import('../views/admin/ProgrammingQuestions.vue'),
+        meta: { admin: true },
+      },
     ],
   },
   {

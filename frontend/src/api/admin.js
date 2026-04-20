@@ -40,6 +40,8 @@ export const createExamTemplate = (data) => request.post('/admin/exam-templates/
 export const updateExamTemplate = (id, data) => request.put(`/admin/exam-templates/${id}/`, data)
 export const patchExamTemplate = (id, data) => request.patch(`/admin/exam-templates/${id}/`, data)
 export const deleteExamTemplate = (id) => request.delete(`/admin/exam-templates/${id}/`)
+export const exportExamTemplates = (ids) => authBlobGet('/admin/exam-templates/export/', ids?.length ? { ids: ids.join(',') } : {})
+export const importExamTemplates = (data) => request.post('/admin/exam-templates/import/', data)
 
 // PDF 题目提取 —— 用独立 axios 实例，避免全局 15s 超时 + 拦截器重复弹窗
 export function pdfExtract(formData) {
@@ -59,6 +61,8 @@ export const getAdminUsers = (params) => request.get('/admin/users/', { params }
 export const createAdminUser = (data) => request.post('/admin/users/', data)
 export const updateAdminUser = (id, data) => request.put(`/admin/users/${id}/`, data)
 export const deleteAdminUser = (id) => request.delete(`/admin/users/${id}/`)
+export const exportAdminUsers = (ids) => authBlobGet('/admin/users/export/', ids?.length ? { ids: ids.join(',') } : {})
+export const importAdminUsers = (formData) => request.post('/admin/users/import/', formData, { headers: { 'Content-Type': 'multipart/form-data' } })
 
 // 班级管理
 export const getClassrooms = (params) => request.get('/admin/classes/', { params })

@@ -3,6 +3,8 @@ from . import views_admin
 
 urlpatterns = [
     # 会员管理
+    path('users/export/', views_admin.export_users, name='admin-user-export'),
+    path('users/import/', views_admin.import_users, name='admin-user-import'),
     path('users/', views_admin.user_list, name='admin-user-list'),
     path('users/<int:pk>/', views_admin.user_detail, name='admin-user-detail'),
     # 班级管理

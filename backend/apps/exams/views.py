@@ -1,4 +1,6 @@
+import json
 import random
+from django.http import HttpResponse
 from django.utils import timezone
 from rest_framework import generics, status
 from rest_framework.decorators import api_view, permission_classes
@@ -298,10 +300,109 @@ class AdminExamTemplateListCreateView(generics.ListCreateAPIView):
         return ExamTemplateSerializer
 
     def get_queryset(self):
-        return ExamTemplate.objects.select_related('level').all()
+        qs = ExamTemplate.objects.select_related('level').all()
+        level = self.request.query_params.get('level')
+        if level:
+            qs = qs.filter(level_id=level)
+        return qs
 
 
 class AdminExamTemplateDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = ExamTemplate.objects.all()
     serializer_class = ExamTemplateSerializer
     permission_classes = [AdminPermission]
+
+
+@api_view(['GET'])
+@permission_classes([AdminPermission])
+def export_exam_templates(request):
+    """导出试卷模板为JSON"""
+    ids = request.query_params.get('ids', '')
+    qs = ExamTemplate.objects.prefetch_related('template_questions__question').select_related('level')
+    if ids:
+        id_list = [int(i) for i in ids.split(',') if i.strip().isdigit()]
+        qs = qs.filter(id__in=id_list)
+
+    data = []
+    for t in qs:
+        questions = []
+        for tq in t.template_questions.all():
+            questions.append({
+                'question_id': tq.question_id,
+                'score': tq.score,
+                'order': tq.sort_order,
+            })
+        data.append({
+            'id': t.id,
+            'name': t.name,
+            'level_id': t.level_id,
+            'template_type': t.template_type,
+            'duration': t.duration,
+            'total_score': t.total_score,
+            'pass_score': t.pass_score,
+            'questions': questions,
+        })
+
+    response = HttpResponse(
+        json.dumps(data, ensure_ascii=False, indent=2),
+        content_type='application/json; charset=utf-8',
+    )
+    response['Content-Disposition'] = 'attachment; filename="exam_templates.json"'
+    return response
+
+
+@api_view(['POST'])
+@permission_classes([AdminPermission])
+def import_exam_templates(request):
+    """从JSON导入试卷模板"""
+    data = request.data
+    if not isinstance(data, list):
+        return Response({'detail': '数据格式错误，需要数组'}, status=400)
+
+    created_count = 0
+    updated_count = 0
+    errors = []
+    for i, item in enumerate(data):
+        try:
+            t_id = item.get('id')
+            existing = None
+            if t_id:
+                try:
+                    existing = ExamTemplate.objects.get(pk=int(t_id))
+                except ExamTemplate.DoesNotExist:
+                    existing = None
+
+            fields = dict(
+                name=item['name'],
+                level_id=int(item['level_id']),
+                template_type=int(item.get('template_type', 1)),
+                duration=int(item.get('duration', 90)),
+                total_score=int(item.get('total_score', 100)),
+                pass_score=int(item.get('pass_score', 60)),
+            )
+            if existing:
+                for k, v in fields.items():
+                    setattr(existing, k, v)
+                existing.save()
+                existing.template_questions.all().delete()
+                t = existing
+                updated_count += 1
+            else:
+                t = ExamTemplate.objects.create(**fields)
+                created_count += 1
+
+            valid_q_ids = set(Question.objects.filter(
+                id__in=[q['question_id'] for q in item.get('questions', [])]
+            ).values_list('id', flat=True))
+            for q in item.get('questions', []):
+                if q['question_id'] in valid_q_ids:
+                    ExamTemplateQuestion.objects.create(
+                        template=t,
+                        question_id=q['question_id'],
+                        score=int(q.get('score', 2)),
+                        sort_order=int(q.get('order', 0)),
+                    )
+        except Exception as e:
+            errors.append({'index': i + 1, 'name': item.get('name', ''), 'error': str(e)})
+
+    return Response({'created_count': created_count, 'updated_count': updated_count, 'error_count': len(errors), 'errors': errors})
