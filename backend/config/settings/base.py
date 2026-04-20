@@ -8,6 +8,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 # Load .env from backend directory
 load_dotenv(BASE_DIR / '.env')
 
+JUDGE0_URL = os.environ.get('JUDGE0_URL', 'http://localhost:2358')
+
 SECRET_KEY = os.environ.get(
     'DJANGO_SECRET_KEY',
     'django-insecure-dev-only-change-in-production'
@@ -30,6 +32,7 @@ INSTALLED_APPS = [
     'apps.practice',
     'apps.exams',
     'apps.stats',
+    'apps.programming',
 ]
 
 MIDDLEWARE = [

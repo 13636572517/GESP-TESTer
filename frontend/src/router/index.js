@@ -71,6 +71,16 @@ const routes = [
         component: () => import('../views/mistakes/Mistakes.vue'),
       },
       {
+        path: 'programming',
+        name: 'ProgrammingList',
+        component: () => import('../views/programming/ProgrammingList.vue'),
+      },
+      {
+        path: 'programming/:id',
+        name: 'ProgrammingDetail',
+        component: () => import('../views/programming/ProgrammingDetail.vue'),
+      },
+      {
         path: 'stats',
         name: 'Stats',
         component: () => import('../views/stats/Stats.vue'),

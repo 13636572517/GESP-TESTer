@@ -34,6 +34,10 @@
           <el-icon><Warning /></el-icon>
           <span>错题本</span>
         </el-menu-item>
+        <el-menu-item index="/programming">
+          <el-icon><Monitor /></el-icon>
+          <span>编程题</span>
+        </el-menu-item>
         <el-menu-item index="/stats">
           <el-icon><DataAnalysis /></el-icon>
           <span>学习统计</span>
