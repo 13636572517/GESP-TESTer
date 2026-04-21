@@ -41,28 +41,26 @@
         </el-table-column>
         <el-table-column label="操作" width="200" fixed="right">
           <template #default="{ row }">
-            <el-button link size="small" type="primary" @click="showEditDialog(row)">编辑</el-button>
-            <el-divider direction="vertical" />
-            <el-button
-              link
-              size="small"
-              :type="row.is_active ? 'warning' : 'success'"
-              @click="toggleActive(row)"
-            >
-              {{ row.is_active ? '停用' : '启用' }}
-            </el-button>
-            <el-divider direction="vertical" />
-            <el-popconfirm
-              title="确认删除该试卷？删除后不可恢复。"
-              confirm-button-text="删除"
-              confirm-button-type="danger"
-              cancel-button-text="取消"
-              @confirm="handleDelete(row)"
-            >
-              <template #reference>
-                <el-button link size="small" type="danger">删除</el-button>
-              </template>
-            </el-popconfirm>
+            <div style="display:flex;gap:4px;flex-wrap:nowrap">
+              <el-button class="op-btn op-edit" size="small" @click="showEditDialog(row)">编辑</el-button>
+              <el-button
+                class="op-btn"
+                :class="row.is_active ? 'op-warn' : 'op-success'"
+                size="small"
+                @click="toggleActive(row)"
+              >{{ row.is_active ? '停用' : '启用' }}</el-button>
+              <el-popconfirm
+                title="确认删除该试卷？删除后不可恢复。"
+                confirm-button-text="删除"
+                confirm-button-type="danger"
+                cancel-button-text="取消"
+                @confirm="handleDelete(row)"
+              >
+                <template #reference>
+                  <el-button class="op-btn op-delete" size="small">删除</el-button>
+                </template>
+              </el-popconfirm>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -763,4 +761,36 @@ onMounted(loadTemplates)
 .pq-opt { font-size: 13px; line-height: 1.8; color: #303133; }
 
 .section-card { margin-bottom: 0; }
+
+.op-btn {
+  padding: 2px 8px !important;
+  height: 24px !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  border-radius: 4px !important;
+}
+.op-edit {
+  color: #1865F2 !important;
+  background: #EBF0FF !important;
+  border-color: #B8D1FB !important;
+}
+.op-edit:hover { color: #1551C9 !important; background: #D6E4FF !important; border-color: #1865F2 !important; }
+.op-warn {
+  color: #B45309 !important;
+  background: #FFFBEB !important;
+  border-color: #FDE68A !important;
+}
+.op-warn:hover { color: #92400E !important; background: #FEF3C7 !important; border-color: #F59E0B !important; }
+.op-success {
+  color: #166534 !important;
+  background: #F0FDF4 !important;
+  border-color: #BBF7D0 !important;
+}
+.op-success:hover { color: #14532D !important; background: #DCFCE7 !important; border-color: #4ADE80 !important; }
+.op-delete {
+  color: #C0392B !important;
+  background: #FEF2F2 !important;
+  border-color: #FECACA !important;
+}
+.op-delete:hover { color: #991B1B !important; background: #FEE2E2 !important; border-color: #F87171 !important; }
 </style>
