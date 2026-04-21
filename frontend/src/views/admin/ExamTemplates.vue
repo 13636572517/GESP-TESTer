@@ -10,7 +10,7 @@
         <el-button type="primary" :icon="Plus" @click="showCreateDialog">创建试卷</el-button>
         <el-button @click="handleExport">导出选中</el-button>
         <el-button @click="handleExportAll">导出全部</el-button>
-        <el-button @click="importDialogVisible = true">导入</el-button>
+        <el-button @click="openImportDialog">导入</el-button>
       </div>
     </el-card>
 
@@ -280,9 +280,16 @@
     </el-dialog>
 
     <!-- 导入对话框 -->
-    <el-dialog v-model="importDialogVisible" title="导入试卷" width="560px">
-      <el-input v-model="importJson" type="textarea" :rows="10" placeholder="将导出的 JSON 内容粘贴到此处" />
-      <div v-if="importResult" style="margin-top:12px">
+    <el-dialog v-model="importDialogVisible" title="导入试卷" width="480px">
+      <el-alert type="info" :closable="false" style="margin-bottom:14px">
+        CSV格式：id, name, level_id, template_type, duration, total_score, pass_score, question_id, score, order<br>
+        每行代表一道题，同一试卷的行共享相同的 id/name。已有 id 的试卷将被覆盖更新。
+      </el-alert>
+      <el-upload :auto-upload="false" :on-change="onImportFileChange" :show-file-list="false" accept=".csv">
+        <el-button>选择 CSV 文件</el-button>
+      </el-upload>
+      <span v-if="importFile" style="margin-left:8px;font-size:12px;color:#6B7280">{{ importFile.name }}</span>
+      <div v-if="importResult" style="margin-top:14px">
         <el-alert :type="importResult.error_count > 0 ? 'warning' : 'success'" :closable="false">
           新增 {{ importResult.created_count }} 份，覆盖更新 {{ importResult.updated_count ?? 0 }} 份，失败 {{ importResult.error_count }} 份
         </el-alert>
@@ -292,7 +299,7 @@
       </div>
       <template #footer>
         <el-button @click="importDialogVisible = false">关闭</el-button>
-        <el-button type="primary" :loading="importing" @click="handleImport">开始导入</el-button>
+        <el-button type="primary" :loading="importing" :disabled="!importFile" @click="handleImport">开始导入</el-button>
       </template>
     </el-dialog>
   </div>
@@ -493,7 +500,7 @@ async function handleCreate() {
 // ─── 导出 / 导入 ─────────────────────────────────────
 const selectedRows = ref([])
 const importDialogVisible = ref(false)
-const importJson = ref('')
+const importFile = ref(null)
 const importing = ref(false)
 const importResult = ref(null)
 
@@ -514,24 +521,34 @@ function triggerBlobDownload(promise, filename) {
 function handleExport() {
   const ids = selectedRows.value.map(r => r.id)
   if (!ids.length) return ElMessage.warning('请先勾选要导出的试卷')
-  triggerBlobDownload(exportExamTemplates(ids), 'exam_templates.json')
+  triggerBlobDownload(exportExamTemplates(ids), 'exam_templates.csv')
 }
 
 function handleExportAll() {
-  triggerBlobDownload(exportExamTemplates([]), 'exam_templates.json')
+  triggerBlobDownload(exportExamTemplates([]), 'exam_templates.csv')
 }
 
+function openImportDialog() {
+  importFile.value = null
+  importResult.value = null
+  importDialogVisible.value = true
+}
+
+function onImportFileChange(file) { importFile.value = file.raw }
+
 async function handleImport() {
-  if (!importJson.value.trim()) return ElMessage.warning('请粘贴JSON数据')
-  let parsed
-  try { parsed = JSON.parse(importJson.value) } catch { return ElMessage.error('JSON格式错误') }
-  if (!Array.isArray(parsed)) return ElMessage.error('需要数组格式')
+  if (!importFile.value) return
   importing.value = true
   importResult.value = null
   try {
-    const res = await importExamTemplates(parsed)
+    const fd = new FormData()
+    fd.append('file', importFile.value)
+    const res = await importExamTemplates(fd)
     importResult.value = res
-    if (res.created_count > 0 || res.updated_count > 0) { ElMessage.success(`新增 ${res.created_count} 份，更新 ${res.updated_count ?? 0} 份`); loadTemplates() }
+    if (res.created_count > 0 || res.updated_count > 0) {
+      ElMessage.success(`新增 ${res.created_count} 份，更新 ${res.updated_count ?? 0} 份`)
+      loadTemplates()
+    }
   } catch { ElMessage.error('导入失败') } finally { importing.value = false }
 }
 

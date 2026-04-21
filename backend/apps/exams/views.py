@@ -1,3 +1,5 @@
+import csv
+import io
 import json
 import random
 from django.http import HttpResponse
@@ -316,55 +318,76 @@ class AdminExamTemplateDetailView(generics.RetrieveUpdateDestroyAPIView):
 @api_view(['GET'])
 @permission_classes([AdminPermission])
 def export_exam_templates(request):
-    """导出试卷模板为JSON"""
+    """导出试卷模板为CSV"""
     ids = request.query_params.get('ids', '')
     qs = ExamTemplate.objects.prefetch_related('template_questions__question').select_related('level')
     if ids:
         id_list = [int(i) for i in ids.split(',') if i.strip().isdigit()]
         qs = qs.filter(id__in=id_list)
 
-    data = []
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['id', 'name', 'level_id', 'template_type', 'duration', 'total_score', 'pass_score', 'question_id', 'score', 'order'])
+
     for t in qs:
-        questions = []
-        for tq in t.template_questions.all():
-            questions.append({
-                'question_id': tq.question_id,
-                'score': tq.score,
-                'order': tq.sort_order,
-            })
-        data.append({
-            'id': t.id,
-            'name': t.name,
-            'level_id': t.level_id,
-            'template_type': t.template_type,
-            'duration': t.duration,
-            'total_score': t.total_score,
-            'pass_score': t.pass_score,
-            'questions': questions,
-        })
+        tqs = list(t.template_questions.all().order_by('sort_order'))
+        if not tqs:
+            writer.writerow([t.id, t.name, t.level_id, t.template_type, t.duration, t.total_score, t.pass_score, '', '', ''])
+        for tq in tqs:
+            writer.writerow([t.id, t.name, t.level_id, t.template_type, t.duration, t.total_score, t.pass_score, tq.question_id, tq.score, tq.sort_order])
 
     response = HttpResponse(
-        json.dumps(data, ensure_ascii=False, indent=2),
-        content_type='application/json; charset=utf-8',
+        '\ufeff' + output.getvalue(),
+        content_type='text/csv; charset=utf-8',
     )
-    response['Content-Disposition'] = 'attachment; filename="exam_templates.json"'
+    response['Content-Disposition'] = 'attachment; filename="exam_templates.csv"'
     return response
 
 
 @api_view(['POST'])
 @permission_classes([AdminPermission])
 def import_exam_templates(request):
-    """从JSON导入试卷模板"""
-    data = request.data
-    if not isinstance(data, list):
-        return Response({'detail': '数据格式错误，需要数组'}, status=400)
+    """从CSV文件导入试卷模板"""
+    file = request.FILES.get('file')
+    if not file:
+        return Response({'detail': '请上传CSV文件'}, status=400)
+
+    try:
+        reader = csv.DictReader(io.TextIOWrapper(file, encoding='utf-8-sig'))
+        rows = list(reader)
+    except Exception as e:
+        return Response({'detail': f'文件解析失败: {e}'}, status=400)
+
+    # 按 id（有则用）或 name+level_id 分组
+    from collections import OrderedDict
+    templates_map = OrderedDict()
+    for row in rows:
+        key = row.get('id') or f"{row.get('name')}_{row.get('level_id')}"
+        if key not in templates_map:
+            templates_map[key] = {
+                'id': row.get('id', '').strip(),
+                'name': row.get('name', '').strip(),
+                'level_id': row.get('level_id', '').strip(),
+                'template_type': row.get('template_type', '1').strip(),
+                'duration': row.get('duration', '90').strip(),
+                'total_score': row.get('total_score', '100').strip(),
+                'pass_score': row.get('pass_score', '60').strip(),
+                'questions': [],
+            }
+        qid = row.get('question_id', '').strip()
+        if qid:
+            templates_map[key]['questions'].append({
+                'question_id': qid,
+                'score': row.get('score', '2').strip(),
+                'order': row.get('order', '0').strip(),
+            })
 
     created_count = 0
     updated_count = 0
     errors = []
-    for i, item in enumerate(data):
+    for i, item in enumerate(templates_map.values()):
         try:
-            t_id = item.get('id')
+            t_id = item['id']
             existing = None
             if t_id:
                 try:
@@ -375,10 +398,10 @@ def import_exam_templates(request):
             fields = dict(
                 name=item['name'],
                 level_id=int(item['level_id']),
-                template_type=int(item.get('template_type', 1)),
-                duration=int(item.get('duration', 90)),
-                total_score=int(item.get('total_score', 100)),
-                pass_score=int(item.get('pass_score', 60)),
+                template_type=int(item.get('template_type') or 1),
+                duration=int(item.get('duration') or 90),
+                total_score=int(item.get('total_score') or 100),
+                pass_score=int(item.get('pass_score') or 60),
             )
             if existing:
                 for k, v in fields.items():
@@ -391,16 +414,16 @@ def import_exam_templates(request):
                 t = ExamTemplate.objects.create(**fields)
                 created_count += 1
 
-            valid_q_ids = set(Question.objects.filter(
-                id__in=[q['question_id'] for q in item.get('questions', [])]
-            ).values_list('id', flat=True))
-            for q in item.get('questions', []):
-                if q['question_id'] in valid_q_ids:
+            q_ids = [int(q['question_id']) for q in item['questions'] if q['question_id']]
+            valid_q_ids = set(Question.objects.filter(id__in=q_ids).values_list('id', flat=True))
+            for q in item['questions']:
+                qid = int(q['question_id'])
+                if qid in valid_q_ids:
                     ExamTemplateQuestion.objects.create(
                         template=t,
-                        question_id=q['question_id'],
-                        score=int(q.get('score', 2)),
-                        sort_order=int(q.get('order', 0)),
+                        question_id=qid,
+                        score=int(q.get('score') or 2),
+                        sort_order=int(q.get('order') or 0),
                     )
         except Exception as e:
             errors.append({'index': i + 1, 'name': item.get('name', ''), 'error': str(e)})
