@@ -46,6 +46,22 @@ class ExamTemplateCreateSerializer(serializers.ModelSerializer):
             )
         return template
 
+    def update(self, instance, validated_data):
+        items = validated_data.pop('question_items', None)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        if items is not None:
+            instance.template_questions.all().delete()
+            for i, item in enumerate(items):
+                ExamTemplateQuestion.objects.create(
+                    template=instance,
+                    question_id=item['question_id'],
+                    score=item.get('score', 2),
+                    sort_order=i,
+                )
+        return instance
+
 
 class SaveAnswerSerializer(serializers.Serializer):
     question_id = serializers.IntegerField()

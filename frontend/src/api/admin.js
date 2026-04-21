@@ -36,6 +36,7 @@ export const downloadCsvTemplate = () => authBlobGet('/admin/questions/csv-templ
 
 // 试卷模板管理
 export const getExamTemplates = (params) => request.get('/admin/exam-templates/', { params })
+export const getExamTemplateDetail = (id) => request.get(`/admin/exam-templates/${id}/`)
 export const createExamTemplate = (data) => request.post('/admin/exam-templates/', data)
 export const updateExamTemplate = (id, data) => request.put(`/admin/exam-templates/${id}/`, data)
 export const patchExamTemplate = (id, data) => request.patch(`/admin/exam-templates/${id}/`, data)

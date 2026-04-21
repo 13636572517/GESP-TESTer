@@ -39,8 +39,10 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="160" fixed="right">
+        <el-table-column label="操作" width="200" fixed="right">
           <template #default="{ row }">
+            <el-button link size="small" type="primary" @click="showEditDialog(row)">编辑</el-button>
+            <el-divider direction="vertical" />
             <el-button
               link
               size="small"
@@ -77,7 +79,7 @@
     <!-- 创建试卷弹窗（全宽大尺寸） -->
     <el-dialog
       v-model="dialogVisible"
-      title="创建试卷"
+      :title="editingTemplateId ? '编辑试卷' : '创建试卷'"
       width="92vw"
       :style="{ maxWidth: '1400px' }"
       align-center
@@ -238,7 +240,7 @@
         >
           预览试卷
         </el-button>
-        <el-button type="primary" @click="handleCreate" :loading="saving">创建</el-button>
+        <el-button type="primary" @click="handleCreate" :loading="saving">{{ editingTemplateId ? '更新' : '创建' }}</el-button>
       </template>
     </el-dialog>
 
@@ -309,7 +311,7 @@
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Plus, Delete, ArrowUp, ArrowDown, View } from '@element-plus/icons-vue'
-import { getQuestions, getExamTemplates, createExamTemplate, patchExamTemplate, deleteExamTemplate, exportExamTemplates, importExamTemplates } from '../../api/admin'
+import { getQuestions, getExamTemplates, getExamTemplateDetail, createExamTemplate, updateExamTemplate, patchExamTemplate, deleteExamTemplate, exportExamTemplates, importExamTemplates } from '../../api/admin'
 
 // ─── 基础状态 ────────────────────────────────────────
 const templates        = ref([])
@@ -324,6 +326,7 @@ const dialogVisible    = ref(false)
 const previewVisible   = ref(false)
 const saving           = ref(false)
 const loading          = ref(false)
+const editingTemplateId = ref(null)
 const allQuestions     = ref([])
 const selectedQuestions = ref([])
 
@@ -455,6 +458,7 @@ function onLevelChange() {
 }
 
 function showCreateDialog() {
+  editingTemplateId.value = null
   form.value = { name: '', level: 1, template_type: 1, duration: 90, total_score: 100, pass_score: 60 }
   selectedQuestions.value = []
   selectedSet.clear()
@@ -463,6 +467,36 @@ function showCreateDialog() {
   debouncedSearch.value = ''
   dialogVisible.value = true
   loadAvailableQuestions()
+}
+
+async function showEditDialog(row) {
+  editingTemplateId.value = row.id
+  form.value = {
+    name: row.name,
+    level: row.level,
+    template_type: row.template_type,
+    duration: row.duration,
+    total_score: row.total_score,
+    pass_score: row.pass_score,
+  }
+  selectedQuestions.value = []
+  selectedSet.clear()
+  checkedSet.clear()
+  filters.value = { search: '', type: null, source: '' }
+  debouncedSearch.value = ''
+  dialogVisible.value = true
+
+  await loadAvailableQuestions()
+
+  const detail = await getExamTemplateDetail(row.id)
+  const qMap = new Map(allQuestions.value.map(q => [q.id, q]))
+  for (const item of (detail.question_items || [])) {
+    const q = qMap.get(item.question_id)
+    if (q && !selectedSet.has(q.id)) {
+      selectedQuestions.value.push(q)
+      selectedSet.add(q.id)
+    }
+  }
 }
 
 // ─── 启用 / 停用 / 删除 ──────────────────────────────
@@ -479,17 +513,23 @@ async function handleDelete(row) {
 
 // ─── 创建提交 ────────────────────────────────────────
 async function handleCreate() {
-  if (!form.value.name)                       return ElMessage.warning('请填写试卷名称')
-  if (!selectedQuestions.value.length)        return ElMessage.warning('请至少选择一道题目')
+  if (!form.value.name)                return ElMessage.warning('请填写试卷名称')
+  if (!selectedQuestions.value.length) return ElMessage.warning('请至少选择一道题目')
   saving.value = true
   try {
-    await createExamTemplate({
+    const payload = {
       ...form.value,
       question_items: selectedQuestions.value.map((q, i) => ({
         question_id: q.id, order: i + 1, score: scorePerQ.value,
       })),
-    })
-    ElMessage.success('创建成功')
+    }
+    if (editingTemplateId.value) {
+      await updateExamTemplate(editingTemplateId.value, payload)
+      ElMessage.success('更新成功')
+    } else {
+      await createExamTemplate(payload)
+      ElMessage.success('创建成功')
+    }
     dialogVisible.value = false
     loadTemplates()
   } finally {

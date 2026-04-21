@@ -311,8 +311,21 @@ class AdminExamTemplateListCreateView(generics.ListCreateAPIView):
 
 class AdminExamTemplateDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = ExamTemplate.objects.all()
-    serializer_class = ExamTemplateSerializer
     permission_classes = [AdminPermission]
+
+    def get_serializer_class(self):
+        if self.request.method in ('PUT', 'PATCH'):
+            return ExamTemplateCreateSerializer
+        return ExamTemplateSerializer
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        data = ExamTemplateSerializer(instance).data
+        data['question_items'] = [
+            {'question_id': tq.question_id, 'score': tq.score, 'sort_order': tq.sort_order}
+            for tq in instance.template_questions.order_by('sort_order')
+        ]
+        return Response(data)
 
 
 @api_view(['GET'])
