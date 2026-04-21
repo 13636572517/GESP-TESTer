@@ -286,6 +286,17 @@ def import_csv(request):
 
 @api_view(['GET'])
 @permission_classes([AdminPermission])
+def question_sources(request):
+    """返回所有题目来源的去重列表"""
+    sources = (
+        Question.objects.exclude(source__isnull=True).exclude(source='')
+        .values_list('source', flat=True).distinct().order_by('source')
+    )
+    return Response(list(sources))
+
+
+@api_view(['GET'])
+@permission_classes([AdminPermission])
 def export_questions(request):
     """导出题目（支持JSON和CSV格式）"""
     fmt = request.query_params.get('fmt', 'json')

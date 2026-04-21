@@ -39,6 +39,12 @@
             <el-option label="困难" :value="3" />
           </el-select>
         </el-form-item>
+        <el-form-item label="来源">
+          <el-select v-model="filters.source" clearable placeholder="全部" style="width: 160px" filterable
+            @change="handleSearch" @clear="handleSearch">
+            <el-option v-for="s in sourceOptions" :key="s" :label="s" :value="s" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="搜索">
           <el-input v-model="filters.search" clearable placeholder="题目内容 / 来源" style="width: 180px"
             @keyup.enter="handleSearch" @clear="handleSearch" />
@@ -391,6 +397,7 @@ import {
   getQuestions, createQuestion, updateQuestion, deleteQuestion,
   batchCreateQuestions, batchDeleteQuestions,
   importCsvQuestions, exportQuestions, downloadCsvTemplate,
+  getQuestionSources,
 } from '../../api/admin'
 import { getKnowledgeTree } from '../../api/knowledge'
 
@@ -402,7 +409,8 @@ const page = ref(1)
 const selectedIds = ref([])
 const tableRef = ref(null)
 
-const filters = ref({ level: null, type: null, difficulty: null, search: '' })
+const filters = ref({ level: null, type: null, difficulty: null, source: '', search: '' })
+const sourceOptions = ref([])
 
 // === 统计 ===
 const levelStats = computed(() => {
@@ -470,6 +478,7 @@ async function loadQuestions() {
     if (filters.value.level) params.level = filters.value.level
     if (filters.value.type) params.type = filters.value.type
     if (filters.value.difficulty) params.difficulty = filters.value.difficulty
+    if (filters.value.source) params.source = filters.value.source
     if (filters.value.search) params.search = filters.value.search
     const res = await getQuestions(params)
     questions.value = res.results || res
@@ -672,6 +681,7 @@ async function loadKnowledgeTree() {
 onMounted(() => {
   loadQuestions()
   loadKnowledgeTree()
+  getQuestionSources().then(res => { sourceOptions.value = res.data || res })
 })
 </script>
 

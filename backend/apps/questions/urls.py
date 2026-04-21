@@ -7,6 +7,7 @@ urlpatterns = [
     path('admin/questions/batch/', views.batch_create_questions, name='question-batch'),
     path('admin/questions/import-csv/', views.import_csv, name='question-import-csv'),
     path('admin/questions/export/', views.export_questions, name='question-export'),
+    path('admin/questions/sources/', views.question_sources, name='question-sources'),
     path('admin/questions/csv-template/', views.download_csv_template, name='question-csv-template'),
     path('admin/questions/batch-delete/', views.batch_delete_questions, name='question-batch-delete'),
     path('admin/questions/pdf-extract/', views.pdf_extract, name='question-pdf-extract'),
