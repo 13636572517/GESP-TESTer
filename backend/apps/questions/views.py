@@ -237,9 +237,11 @@ def import_csv(request):
             # 有ID则覆盖更新，否则新增
             q_id_raw = row.get('ID', row.get('id', '')).strip()
             existing = None
+            forced_id = None
             if q_id_raw:
                 try:
-                    existing = Question.objects.get(pk=int(q_id_raw))
+                    forced_id = int(q_id_raw)
+                    existing = Question.objects.get(pk=forced_id)
                 except (Question.DoesNotExist, ValueError):
                     existing = None
 
@@ -254,7 +256,11 @@ def import_csv(request):
             else:
                 serializer = QuestionCreateSerializer(data=q_data, context={'request': request})
                 if serializer.is_valid():
-                    q_obj = serializer.save()
+                    # 若 CSV 指定了 ID，强制使用该 ID 以保持与试卷模板的关联一致性
+                    if forced_id:
+                        q_obj = serializer.save(id=forced_id)
+                    else:
+                        q_obj = serializer.save()
                     created.append(i)
                 else:
                     errors.append({'row': i + 2, 'errors': serializer.errors})
