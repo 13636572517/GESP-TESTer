@@ -484,15 +484,12 @@ async function showEditDialog(row) {
   debouncedSearch.value = ''
   dialogVisible.value = true
 
-  await loadAvailableQuestions()
-
-  const detail = await getExamTemplateDetail(row.id)
-  const qMap = new Map(allQuestions.value.map(q => [q.id, q]))
+  const [detail] = await Promise.all([getExamTemplateDetail(row.id), loadAvailableQuestions()])
   for (const item of (detail.question_items || [])) {
-    const q = qMap.get(item.question_id)
-    if (q && !selectedSet.has(q.id)) {
-      selectedQuestions.value.push(q)
-      selectedSet.add(q.id)
+    if (!selectedSet.has(item.id)) {
+      item._text = stripHtml(item.content)
+      selectedQuestions.value.push(item)
+      selectedSet.add(item.id)
     }
   }
 }

@@ -319,12 +319,17 @@ class AdminExamTemplateDetailView(generics.RetrieveUpdateDestroyAPIView):
         return ExamTemplateSerializer
 
     def retrieve(self, request, *args, **kwargs):
+        from apps.questions.serializers import QuestionForExamSerializer
         instance = self.get_object()
         data = ExamTemplateSerializer(instance).data
-        data['question_items'] = [
-            {'question_id': tq.question_id, 'score': tq.score, 'sort_order': tq.sort_order}
-            for tq in instance.template_questions.order_by('sort_order')
-        ]
+        tqs = instance.template_questions.order_by('sort_order').select_related('question__level')
+        questions = []
+        for tq in tqs:
+            q_data = dict(QuestionForExamSerializer(tq.question).data)
+            q_data['score'] = tq.score
+            q_data['sort_order'] = tq.sort_order
+            questions.append(q_data)
+        data['question_items'] = questions
         return Response(data)
 
 
