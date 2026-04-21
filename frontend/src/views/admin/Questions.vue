@@ -40,7 +40,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="搜索">
-          <el-input v-model="filters.search" clearable placeholder="题目内容关键词" style="width: 180px"
+          <el-input v-model="filters.search" clearable placeholder="题目内容 / 来源" style="width: 180px"
             @keyup.enter="handleSearch" @clear="handleSearch" />
         </el-form-item>
         <el-form-item>
@@ -130,6 +130,20 @@
         </el-table-column>
         <el-table-column prop="answer" label="答案" width="70" />
         <el-table-column prop="source" label="来源" width="120" show-overflow-tooltip />
+        <el-table-column label="知识点" min-width="160">
+          <template #default="{ row }">
+            <span v-if="row.knowledge_point_names?.length">
+              <el-tag
+                v-for="name in row.knowledge_point_names"
+                :key="name"
+                size="small"
+                type="info"
+                style="margin: 1px 2px"
+              >{{ name }}</el-tag>
+            </span>
+            <span v-else style="color: #C0C4CC; font-size: 12px">—</span>
+          </template>
+        </el-table-column>
         <el-table-column label="操作" width="176" fixed="right">
           <template #default="{ row }">
             <div style="display: flex; gap: 4px; flex-wrap: nowrap">

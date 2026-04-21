@@ -101,7 +101,7 @@ class QuestionListCreateView(generics.ListCreateAPIView):
         if knowledge:
             qs = qs.filter(knowledge_points__id=knowledge)
         if search:
-            qs = qs.filter(content__icontains=search)
+            qs = qs.filter(Q(content__icontains=search) | Q(source__icontains=search))
         if source:
             qs = qs.filter(source__icontains=source)
         return qs

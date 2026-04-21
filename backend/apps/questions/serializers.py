@@ -9,13 +9,18 @@ class QuestionSerializer(serializers.ModelSerializer):
     knowledge_point_ids = serializers.PrimaryKeyRelatedField(
         source='knowledge_points', many=True, read_only=True
     )
+    knowledge_point_names = serializers.SerializerMethodField()
+
+    def get_knowledge_point_names(self, obj):
+        return [kp.name for kp in obj.knowledge_points.all()]
 
     class Meta:
         model = Question
         fields = [
             'id', 'level', 'level_name', 'question_type', 'type_display',
             'difficulty', 'difficulty_display', 'content', 'options',
-            'answer', 'explanation', 'source', 'source_type', 'knowledge_point_ids',
+            'answer', 'explanation', 'source', 'source_type',
+            'knowledge_point_ids', 'knowledge_point_names',
             'is_active', 'created_at',
         ]
 
