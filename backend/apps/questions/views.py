@@ -246,17 +246,27 @@ def import_csv(request):
             if existing:
                 serializer = QuestionCreateSerializer(existing, data=q_data, context={'request': request})
                 if serializer.is_valid():
-                    serializer.save()
+                    q_obj = serializer.save()
                     updated.append(i)
                 else:
                     errors.append({'row': i + 2, 'errors': serializer.errors})
+                    continue
             else:
                 serializer = QuestionCreateSerializer(data=q_data, context={'request': request})
                 if serializer.is_valid():
-                    serializer.save()
+                    q_obj = serializer.save()
                     created.append(i)
                 else:
                     errors.append({'row': i + 2, 'errors': serializer.errors})
+                    continue
+
+            # 处理知识点关联（优先用ID列，其次用名称列）
+            kp_ids_raw = row.get('知识点ID', row.get('knowledge_point_ids', '')).strip()
+            if kp_ids_raw:
+                from apps.knowledge.models import KnowledgePoint
+                ids = [int(x) for x in kp_ids_raw.split(',') if x.strip().isdigit()]
+                kps = KnowledgePoint.objects.filter(id__in=ids)
+                q_obj.knowledge_points.set(kps)
         except Exception as e:
             errors.append({'row': i + 2, 'errors': str(e)})
 
@@ -290,7 +300,7 @@ def export_questions(request):
     if fmt == 'csv':
         buf = io.StringIO()
         writer = csv.writer(buf)
-        writer.writerow(['ID', '级别', '题型', '难度', '题目', '选项A', '选项B', '选项C', '选项D', '选项E', '选项F', '答案', '解析', '来源'])
+        writer.writerow(['ID', '级别', '题型', '难度', '题目', '选项A', '选项B', '选项C', '选项D', '选项E', '选项F', '答案', '解析', '来源', '知识点ID', '知识点'])
 
         TYPE_NAMES = {1: '单选题', 2: '多选题', 3: '判断题'}
         DIFF_NAMES = {1: '简单', 2: '中等', 3: '困难'}
@@ -298,6 +308,7 @@ def export_questions(request):
         for q in qs:
             opts = q.options or []
             opt_map = {o['key']: o['text'] for o in opts}
+            kps = list(q.knowledge_points.all())
             writer.writerow([
                 q.id,
                 f'{q.level_id}级',
@@ -309,6 +320,8 @@ def export_questions(request):
                 q.answer,
                 q.explanation or '',
                 q.source or '',
+                ','.join(str(kp.id) for kp in kps),
+                ','.join(kp.name for kp in kps),
             ])
 
         response = HttpResponse(buf.getvalue().encode('utf-8-sig'), content_type='text/csv; charset=utf-8')
@@ -318,6 +331,7 @@ def export_questions(request):
         # JSON导出
         data = []
         for q in qs:
+            kps = list(q.knowledge_points.all())
             data.append({
                 'id': q.id,
                 'level': q.level_id,
@@ -328,6 +342,7 @@ def export_questions(request):
                 'answer': q.answer,
                 'explanation': q.explanation or '',
                 'source': q.source or '',
+                'knowledge_point_ids': [kp.id for kp in kps],
             })
 
         response = HttpResponse(
@@ -344,12 +359,12 @@ def download_csv_template(request):
     """下载CSV导入模板"""
     buf = io.StringIO()
     writer = csv.writer(buf)
-    writer.writerow(['级别', '题型', '难度', '题目', '选项A', '选项B', '选项C', '选项D', '选项E', '选项F', '答案', '解析', '来源'])
-    writer.writerow(['1级', '单选题', '简单', 'C++中，以下哪个是正确的输出语句？', 'print("hello")', 'cout<<"hello"', 'echo "hello"', 'printf "hello"', '', '', 'B', 'C++使用cout进行标准输出', '模拟题'])
-    writer.writerow(['2级', '判断题', '中等', 'C++程序的执行从main函数开始。', '', '', '', '', '', '', 'T', '每个C++程序都必须有一个main函数', '模拟题'])
-    writer.writerow(['3级', '多选题', '困难', '以下哪些是STL中的关联容器？', 'set', 'map', 'vector', 'unordered_map', '', '', 'ABD', 'set、map、unordered_map是关联容器', '模拟题'])
-    writer.writerow(['1级', '单选题', '中等', '以下程序的输出是什么？```int a = 10, b = 3; cout << a / b;```', '3', '3.33', '10', '0', '', '', 'A', '整数除法向下取整', '模拟题'])
-    writer.writerow(['2级', '单选题', '简单', '代码 `int a, b; cout << a;` 中a的值是？', '随机', '0', '1', '编译错误', '', '', 'A', '未初始化变量的值不确定', '模拟题'])
+    writer.writerow(['级别', '题型', '难度', '题目', '选项A', '选项B', '选项C', '选项D', '选项E', '选项F', '答案', '解析', '来源', '知识点ID'])
+    writer.writerow(['1级', '单选题', '简单', 'C++中，以下哪个是正确的输出语句？', 'print("hello")', 'cout<<"hello"', 'echo "hello"', 'printf "hello"', '', '', 'B', 'C++使用cout进行标准输出', '模拟题', ''])
+    writer.writerow(['2级', '判断题', '中等', 'C++程序的执行从main函数开始。', '', '', '', '', '', '', 'T', '每个C++程序都必须有一个main函数', '模拟题', ''])
+    writer.writerow(['3级', '多选题', '困难', '以下哪些是STL中的关联容器？', 'set', 'map', 'vector', 'unordered_map', '', '', 'ABD', 'set、map、unordered_map是关联容器', '模拟题', ''])
+    writer.writerow(['1级', '单选题', '中等', '以下程序的输出是什么？```int a = 10, b = 3; cout << a / b;```', '3', '3.33', '10', '0', '', '', 'A', '整数除法向下取整', '模拟题', ''])
+    writer.writerow(['2级', '单选题', '简单', '代码 `int a, b; cout << a;` 中a的值是？', '随机', '0', '1', '编译错误', '', '', 'A', '未初始化变量的值不确定', '模拟题', ''])
     response = HttpResponse(buf.getvalue().encode('utf-8-sig'), content_type='text/csv; charset=utf-8')
     response['Content-Disposition'] = 'attachment; filename="import_template.csv"'
     return response
