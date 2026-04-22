@@ -213,7 +213,7 @@
         <el-form-item label="选项" v-if="form.question_type !== 3">
           <div v-for="(opt, i) in form.options" :key="i" style="display: flex; gap: 8px; margin-bottom: 8px; width: 100%">
             <el-tag style="flex-shrink: 0; height: 32px; line-height: 32px">{{ opt.key }}</el-tag>
-            <el-input v-model="opt.text" placeholder="选项内容" />
+            <el-input v-model="opt.text" type="textarea" :rows="2" placeholder="支持HTML格式，如 <pre>代码</pre>" style="font-family: monospace" />
             <el-button link type="danger" @click="form.options.splice(i, 1)" v-if="form.options.length > 2">
               <el-icon><Delete /></el-icon>
             </el-button>
@@ -547,10 +547,17 @@ async function handleSave() {
 }
 
 // --- 删除 ---
+function adjustPageAfterDelete(deletedCount = 1) {
+  const remaining = total.value - deletedCount
+  const maxPage = Math.max(1, Math.ceil(remaining / 20))
+  if (page.value > maxPage) page.value = maxPage
+}
+
 async function handleDelete(id) {
   await ElMessageBox.confirm('确定删除该题目？此操作不可恢复。', '确认删除')
   await deleteQuestion(id)
   ElMessage.success('已删除')
+  adjustPageAfterDelete(1)
   loadQuestions()
 }
 
@@ -559,6 +566,7 @@ async function handleBatchDelete() {
   await ElMessageBox.confirm(`确定删除选中的 ${selectedIds.value.length} 道题目？此操作不可恢复。`, '批量删除')
   await batchDeleteQuestions(selectedIds.value)
   ElMessage.success(`已删除 ${selectedIds.value.length} 道题目`)
+  adjustPageAfterDelete(selectedIds.value.length)
   selectedIds.value = []
   loadQuestions()
 }
