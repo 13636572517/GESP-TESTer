@@ -31,7 +31,7 @@ function authBlobGet(url, params = {}) {
   })
 }
 
-export const getQuestionSources = () => request.get('/admin/questions/sources/')
+export const getQuestionSources = (params) => request.get('/admin/questions/sources/', { params })
 export const exportQuestions = (params) => authBlobGet('/admin/questions/export/', params)
 export const downloadCsvTemplate = () => authBlobGet('/admin/questions/csv-template/')
 

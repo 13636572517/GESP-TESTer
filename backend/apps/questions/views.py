@@ -287,11 +287,12 @@ def import_csv(request):
 @api_view(['GET'])
 @permission_classes([AdminPermission])
 def question_sources(request):
-    """返回所有题目来源的去重列表"""
-    sources = (
-        Question.objects.exclude(source__isnull=True).exclude(source='')
-        .values_list('source', flat=True).distinct().order_by('source')
-    )
+    """返回题目来源去重列表，支持按级别过滤"""
+    qs = Question.objects.exclude(source__isnull=True).exclude(source='')
+    level = request.query_params.get('level')
+    if level:
+        qs = qs.filter(level_id=level)
+    sources = qs.values_list('source', flat=True).distinct().order_by('source')
     return Response(list(sources))
 
 

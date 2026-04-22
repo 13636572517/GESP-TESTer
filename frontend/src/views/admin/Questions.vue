@@ -19,7 +19,7 @@
       <el-form :inline="true" :model="filters">
         <el-form-item label="级别">
           <el-select v-model="filters.level" clearable placeholder="全部" style="width: 100px"
-            @change="handleSearch" @clear="handleSearch">
+            @change="handleLevelChange" @clear="handleLevelChange">
             <el-option v-for="i in 8" :key="i" :label="`${i}级`" :value="i" />
           </el-select>
         </el-form-item>
@@ -678,10 +678,21 @@ async function loadKnowledgeTree() {
   } catch { /* empty */ }
 }
 
+async function loadSources() {
+  const res = await getQuestionSources({ level: filters.value.level || undefined })
+  sourceOptions.value = res.data || res
+}
+
+function handleLevelChange() {
+  filters.value.source = ''
+  loadSources()
+  handleSearch()
+}
+
 onMounted(() => {
   loadQuestions()
   loadKnowledgeTree()
-  getQuestionSources().then(res => { sourceOptions.value = res.data || res })
+  loadSources()
 })
 </script>
 
