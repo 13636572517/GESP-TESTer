@@ -67,79 +67,151 @@
       </el-alert>
     </el-card>
 
-    <!-- Step 2: 预览确认 -->
+    <!-- Step 2: 逐题确认 -->
     <div v-if="step === 2">
+      <!-- 顶部工具栏 -->
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px">
-        <div>
-          <span style="font-size: 16px; font-weight: 600">识别结果预览</span>
-          <el-tag style="margin-left: 10px" type="success">共 {{ questions.length }} 题</el-tag>
-          <el-tag v-if="extractErrors.length" type="warning" style="margin-left: 6px">{{ extractErrors.length }} 页识别失败</el-tag>
+        <div style="display: flex; align-items: center; gap: 10px">
+          <span style="font-size: 16px; font-weight: 600">逐题核对</span>
+          <el-tag type="success">共 {{ questions.length }} 题</el-tag>
+          <el-tag v-if="extractErrors.length" type="warning">{{ extractErrors.length }} 页识别失败</el-tag>
+          <el-progress
+            :percentage="Math.round((currentIdx + 1) / questions.length * 100)"
+            :stroke-width="10"
+            style="width: 180px"
+            :format="() => `${currentIdx + 1} / ${questions.length}`"
+          />
         </div>
         <div style="display: flex; gap: 8px">
           <el-button @click="step = 1; questions = []">重新上传</el-button>
           <el-button type="primary" :loading="importing" :disabled="questions.length === 0" @click="handleImport">
-            确认导入 {{ questions.length }} 题
+            全部导入（{{ questions.length }} 题）
           </el-button>
         </div>
       </div>
 
-      <!-- 识别失败提示 -->
-      <el-alert v-if="extractErrors.length" type="warning" :closable="false" style="margin-bottom: 12px">
+      <el-alert v-if="extractErrors.length" type="warning" :closable="true" style="margin-bottom: 12px">
         <div v-for="e in extractErrors" :key="e">{{ e }}</div>
       </el-alert>
 
-      <!-- 题目预览表 -->
-      <el-card v-for="(q, idx) in questions" :key="idx" class="question-card">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px">
-          <div style="flex: 1; min-width: 0">
-            <!-- 题目头部 -->
-            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap">
-              <span style="font-weight: 600; color: #6B7280; min-width: 28px">{{ idx + 1 }}.</span>
-              <el-select v-model="q.question_type" size="small" style="width: 90px">
-                <el-option label="单选题" :value="1" />
-                <el-option label="判断题" :value="3" />
-              </el-select>
-              <el-select v-model="q.difficulty" size="small" style="width: 80px">
-                <el-option label="简单" :value="1" />
-                <el-option label="中等" :value="2" />
-                <el-option label="困难" :value="3" />
-              </el-select>
-              <el-select v-model="q.level" size="small" style="width: 80px">
-                <el-option v-for="i in 8" :key="i" :label="`${i}级`" :value="i" />
-              </el-select>
-              <el-tag size="small" type="info">答案：{{ q.answer }}</el-tag>
-            </div>
-
-            <!-- 题目内容 -->
-            <el-input v-model="q.content" type="textarea" :rows="3" size="small"
-              style="margin-bottom: 8px; font-family: monospace" />
-
-            <!-- 选项（单选题）-->
-            <div v-if="q.question_type === 1" style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px">
-              <div v-for="(opt, oi) in q.options" :key="oi" style="display: flex; align-items: center; gap: 6px">
-                <span style="font-weight: 600; color: #1865F2; min-width: 18px">{{ opt.key }}.</span>
-                <el-input v-model="opt.text" size="small" :placeholder="`选项${opt.key}`" />
-              </div>
-            </div>
-
-            <!-- 解析 -->
-            <el-input v-model="q.explanation" placeholder="解析（可选）" size="small"
-              style="margin-top: 8px" />
-          </div>
-
-          <!-- 删除按钮 -->
-          <el-button type="danger" circle size="small" @click="questions.splice(idx, 1)"
-            style="flex-shrink: 0; margin-top: 4px">
-            <el-icon><Delete /></el-icon>
-          </el-button>
-        </div>
-      </el-card>
-
       <el-empty v-if="questions.length === 0" description="没有识别到题目，请重新上传" />
 
-      <div v-if="questions.length > 0" style="text-align: right; margin-top: 16px">
-        <el-button type="primary" :loading="importing" @click="handleImport">
-          确认导入 {{ questions.length }} 题
+      <!-- 左右分栏：预览 + 编辑 -->
+      <div v-if="questions.length > 0 && currentQ" style="display: flex; gap: 16px; align-items: flex-start">
+
+        <!-- 左：渲染预览 -->
+        <el-card style="flex: 1; min-width: 0">
+          <template #header>
+            <span style="font-weight: 600; color: #6B7280">预览（渲染效果）</span>
+          </template>
+          <div class="preview-box">
+            <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px">
+              <el-tag size="small">{{ ['','单选题','多选题','判断题'][currentQ.question_type] }}</el-tag>
+              <el-tag size="small" :type="currentQ.difficulty === 1 ? 'success' : currentQ.difficulty === 2 ? 'warning' : 'danger'">
+                {{ ['','简单','中等','困难'][currentQ.difficulty] }}
+              </el-tag>
+              <el-tag size="small" type="info">{{ currentQ.level }}级</el-tag>
+              <el-tag size="small" type="success">答案：{{ currentQ.answer }}</el-tag>
+            </div>
+            <div class="preview-content" v-html="renderContent(currentQ.content)" v-highlight />
+            <div class="preview-options" v-if="currentQ.question_type !== 3">
+              <div
+                v-for="opt in (currentQ.options || [])" :key="opt.key"
+                class="preview-option"
+                :class="{ correct: currentQ.answer?.includes(opt.key) }"
+              >
+                <span class="opt-key">{{ opt.key }}</span>
+                <span v-html="renderContent(opt.text)" />
+              </div>
+            </div>
+            <div class="preview-options" v-else>
+              <div class="preview-option" :class="{ correct: currentQ.answer === 'T' }">
+                <span class="opt-key">T</span> 正确
+              </div>
+              <div class="preview-option" :class="{ correct: currentQ.answer === 'F' }">
+                <span class="opt-key">F</span> 错误
+              </div>
+            </div>
+            <div v-if="currentQ.explanation" style="margin-top: 10px; padding: 8px; background: #F0FDF4; border-radius: 6px; font-size: 13px; color: #15803D">
+              <strong>解析：</strong>{{ currentQ.explanation }}
+            </div>
+          </div>
+        </el-card>
+
+        <!-- 右：编辑表单 -->
+        <el-card style="width: 420px; flex-shrink: 0">
+          <template #header>
+            <div style="display: flex; justify-content: space-between; align-items: center">
+              <span style="font-weight: 600; color: #6B7280">编辑（第 {{ currentIdx + 1 }} 题）</span>
+              <el-button type="danger" size="small" text @click="deleteCurrentQ">
+                <el-icon><Delete /></el-icon> 删除此题
+              </el-button>
+            </div>
+          </template>
+
+          <el-form label-width="60px" size="small">
+            <el-row :gutter="8">
+              <el-col :span="8">
+                <el-form-item label="题型">
+                  <el-select v-model="currentQ.question_type" style="width: 100%">
+                    <el-option label="单选题" :value="1" />
+                    <el-option label="判断题" :value="3" />
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="难度">
+                  <el-select v-model="currentQ.difficulty" style="width: 100%">
+                    <el-option label="简单" :value="1" />
+                    <el-option label="中等" :value="2" />
+                    <el-option label="困难" :value="3" />
+                  </el-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="8">
+                <el-form-item label="级别">
+                  <el-select v-model="currentQ.level" style="width: 100%">
+                    <el-option v-for="i in 8" :key="i" :label="`${i}级`" :value="i" />
+                  </el-select>
+                </el-form-item>
+              </el-col>
+            </el-row>
+
+            <el-form-item label="题目">
+              <el-input v-model="currentQ.content" type="textarea" :rows="5" style="font-family: monospace"
+                placeholder="支持HTML格式，如 <pre>代码</pre>" />
+            </el-form-item>
+
+            <el-form-item v-if="currentQ.question_type !== 3" label="选项">
+              <div style="width: 100%">
+                <div v-for="(opt, oi) in currentQ.options" :key="oi"
+                  style="display: flex; align-items: flex-start; gap: 6px; margin-bottom: 6px">
+                  <span style="font-weight:600; color:#1865F2; min-width:18px; padding-top:5px">{{ opt.key }}.</span>
+                  <el-input v-model="opt.text" type="textarea" :rows="2" style="font-family: monospace; flex:1"
+                    :placeholder="`选项${opt.key}`" />
+                </div>
+              </div>
+            </el-form-item>
+
+            <el-form-item label="答案">
+              <el-input v-model="currentQ.answer" placeholder="单选填字母如B，判断填T或F" style="width: 120px" />
+            </el-form-item>
+
+            <el-form-item label="解析">
+              <el-input v-model="currentQ.explanation" type="textarea" :rows="2" placeholder="可选" />
+            </el-form-item>
+          </el-form>
+        </el-card>
+      </div>
+
+      <!-- 底部导航 -->
+      <div v-if="questions.length > 0" style="display: flex; justify-content: center; align-items: center; gap: 16px; margin-top: 20px">
+        <el-button :disabled="currentIdx === 0" @click="currentIdx--">
+          <el-icon><ArrowLeft /></el-icon> 上一题
+        </el-button>
+        <span style="color: #6B7280; font-size: 14px">{{ currentIdx + 1 }} / {{ questions.length }}</span>
+        <el-button :disabled="currentIdx === questions.length - 1" type="primary" @click="currentIdx++">
+          下一题 <el-icon><ArrowRight /></el-icon>
         </el-button>
       </div>
     </div>
@@ -183,9 +255,9 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
-import { UploadFilled, Delete } from '@element-plus/icons-vue'
+import { UploadFilled, Delete, ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
 import { pdfExtract, pdfImportConfirm } from '../../api/admin'
 
 const step = ref(1)
@@ -201,9 +273,24 @@ const totalPage = ref(0)
 const extractErrors = ref([])
 
 const questions = ref([])
+const currentIdx = ref(0)
+const currentQ = computed(() => questions.value[currentIdx.value] ?? null)
 const importing = ref(false)
 const importResult = ref(null)
-const failedContents = ref({}) // index → content，供失败详情显示
+const failedContents = ref({})
+
+function renderContent(text) {
+  if (!text) return ''
+  // 把 ```code``` 转为 <pre><code>，行内 `code` 转为 <code>
+  return text
+    .replace(/```([\s\S]*?)```/g, (_, c) => `<pre><code>${c.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code></pre>`)
+    .replace(/`([^`]+)`/g, (_, c) => `<code>${c.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code>`)
+}
+
+function deleteCurrentQ() {
+  questions.value.splice(currentIdx.value, 1)
+  if (currentIdx.value >= questions.value.length) currentIdx.value = Math.max(0, questions.value.length - 1)
+}
 
 function handleFileChange(file) {
   pdfFile.value = file.raw
@@ -239,7 +326,8 @@ async function handleExtract() {
         ElMessage.warning('未识别到题目，请检查PDF内容或尝试其他文件')
       }
     } else {
-      ElMessage.success(`识别完成，共 ${questions.value.length} 题，请确认后导入`)
+      ElMessage.success(`识别完成，共 ${questions.value.length} 题，请逐题核对后导入`)
+      currentIdx.value = 0
       step.value = 2
     }
   } catch (e) {
@@ -290,6 +378,7 @@ function resetAll() {
   step.value = 1
   pdfFile.value = null
   questions.value = []
+  currentIdx.value = 0
   extractProgress.value = 0
   importResult.value = null
   uploadRef.value?.clearFiles()
@@ -297,12 +386,24 @@ function resetAll() {
 </script>
 
 <style scoped>
-.question-card {
-  margin-bottom: 12px;
-  border-left: 3px solid #E5E7EB;
-  transition: border-color 0.15s;
+.preview-box { font-size: 14px; line-height: 1.7; }
+.preview-content { margin-bottom: 12px; }
+.preview-content :deep(pre) {
+  background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px;
+  padding: 10px 14px; overflow-x: auto; font-size: 13px;
 }
-.question-card:hover {
-  border-left-color: #1865F2;
+.preview-content :deep(code) { font-family: 'Fira Code', monospace; font-size: 13px; }
+.preview-options { display: flex; flex-direction: column; gap: 6px; }
+.preview-option {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 6px 10px; border-radius: 6px;
+  background: #F9FAFB; border: 1px solid #E5E7EB;
 }
+.preview-option.correct {
+  background: #F0FDF4; border-color: #86EFAC; color: #15803D; font-weight: 500;
+}
+.opt-key {
+  font-weight: 700; color: #1865F2; min-width: 18px; flex-shrink: 0;
+}
+.preview-option.correct .opt-key { color: #15803D; }
 </style>
