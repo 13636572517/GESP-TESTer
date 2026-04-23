@@ -100,7 +100,7 @@
       <div v-if="questions.length > 0 && currentQ" style="display: flex; gap: 16px; align-items: flex-start">
 
         <!-- 左：渲染预览 -->
-        <el-card style="flex: 1; min-width: 0">
+        <el-card style="flex: 1; min-width: 0; overflow: hidden">
           <template #header>
             <span style="font-weight: 600; color: #6B7280">预览（渲染效果）</span>
           </template>
@@ -139,7 +139,7 @@
         </el-card>
 
         <!-- 右：编辑表单 -->
-        <el-card style="width: 420px; flex-shrink: 0">
+        <el-card style="flex: 1; min-width: 0; overflow: hidden">
           <template #header>
             <div style="display: flex; justify-content: space-between; align-items: center">
               <span style="font-weight: 600; color: #6B7280">编辑（第 {{ currentIdx + 1 }} 题）</span>
@@ -188,8 +188,21 @@
                   style="display: flex; align-items: flex-start; gap: 6px; margin-bottom: 6px">
                   <span style="font-weight:600; color:#1865F2; min-width:18px; padding-top:5px">{{ opt.key }}.</span>
                   <el-input v-model="opt.text" type="textarea" :rows="2" style="font-family: monospace; flex:1"
-                    :placeholder="`选项${opt.key}`" />
+                    :placeholder="`选项${opt.key}，支持HTML如 <pre>代码</pre>`" />
+                  <el-button
+                    v-if="currentQ.options.length > 2"
+                    link type="danger" size="small"
+                    style="padding-top: 5px; flex-shrink:0"
+                    @click="removeOption(oi)"
+                  ><el-icon><Delete /></el-icon></el-button>
                 </div>
+                <el-button
+                  v-if="currentQ.options.length < 6"
+                  size="small" @click="addOption"
+                  style="margin-top: 2px"
+                >
+                  <el-icon><Plus /></el-icon> 添加选项
+                </el-button>
               </div>
             </el-form-item>
 
@@ -257,7 +270,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
-import { UploadFilled, Delete, ArrowLeft, ArrowRight } from '@element-plus/icons-vue'
+import { UploadFilled, Delete, ArrowLeft, ArrowRight, Plus } from '@element-plus/icons-vue'
 import { pdfExtract, pdfImportConfirm } from '../../api/admin'
 
 const step = ref(1)
@@ -290,6 +303,22 @@ function renderContent(text) {
 function deleteCurrentQ() {
   questions.value.splice(currentIdx.value, 1)
   if (currentIdx.value >= questions.value.length) currentIdx.value = Math.max(0, questions.value.length - 1)
+}
+
+const OPTION_KEYS = ['A', 'B', 'C', 'D', 'E', 'F']
+
+function addOption() {
+  if (!currentQ.value) return
+  const used = new Set(currentQ.value.options.map(o => o.key))
+  const next = OPTION_KEYS.find(k => !used.has(k))
+  if (next) currentQ.value.options.push({ key: next, text: '' })
+}
+
+function removeOption(idx) {
+  if (!currentQ.value) return
+  currentQ.value.options.splice(idx, 1)
+  // 重新按 ABCDEF 顺序重排 key
+  currentQ.value.options.forEach((o, i) => { o.key = OPTION_KEYS[i] })
 }
 
 function handleFileChange(file) {
