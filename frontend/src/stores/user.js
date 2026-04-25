@@ -9,6 +9,7 @@ export const useUserStore = defineStore('user', () => {
 
   const isLoggedIn = computed(() => !!token.value)
   const isAdmin = computed(() => userInfo.value?.is_admin || false)
+  const isTeacher = computed(() => userInfo.value?.is_teacher || false)
 
   function setTokens(access, refresh) {
     token.value = access
@@ -36,7 +37,7 @@ export const useUserStore = defineStore('user', () => {
 
   return {
     token, refreshToken, userInfo,
-    isLoggedIn, isAdmin,
+    isLoggedIn, isAdmin, isTeacher,
     setTokens, fetchProfile, logout,
   }
 })

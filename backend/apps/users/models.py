@@ -10,6 +10,7 @@ class UserProfile(models.Model):
     nickname = models.CharField('昵称', max_length=50, blank=True, default='')
     current_level = models.PositiveSmallIntegerField('当前学习级别', default=1)
     is_admin = models.BooleanField('是否管理员', default=False)
+    is_teacher = models.BooleanField('是否老师', default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -46,6 +47,11 @@ class Classroom(models.Model):
     description = models.CharField('描述', max_length=300, blank=True, default='')
     level = models.ForeignKey(GespLevel, on_delete=models.SET_NULL, null=True, blank=True,
                                related_name='classrooms', verbose_name='对应级别')
+    teachers = models.ManyToManyField(
+        'auth.User', blank=True,
+        related_name='teaching_classrooms',
+        verbose_name='授课老师',
+    )
     is_active = models.BooleanField('是否启用', default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

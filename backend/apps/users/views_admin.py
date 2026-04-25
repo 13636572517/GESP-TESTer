@@ -31,6 +31,7 @@ def user_list(request):
         nickname = request.data.get('nickname', '').strip()
         current_level = int(request.data.get('current_level', 1))
         is_admin_flag = bool(request.data.get('is_admin', False))
+        is_teacher_flag = bool(request.data.get('is_teacher', False))
 
         if not username:
             return Response({'detail': '用户名不能为空'}, status=400)
@@ -46,6 +47,7 @@ def user_list(request):
             nickname=nickname or username,
             current_level=current_level,
             is_admin=is_admin_flag,
+            is_teacher=is_teacher_flag,
         )
         serializer = AdminUserSerializer(user, context={'request': request})
         return Response(serializer.data, status=201)
@@ -104,6 +106,8 @@ def user_detail(request, pk):
         if user == request.user and not data['is_admin']:
             return Response({'detail': '不能取消自己的管理员权限'}, status=400)
         profile.is_admin = bool(data['is_admin'])
+    if 'is_teacher' in data:
+        profile.is_teacher = bool(data['is_teacher'])
     profile.save()
     # 可选：重置密码
     new_password = data.get('new_password', '').strip()
@@ -222,9 +226,10 @@ def classroom_list(request):
         serializer = ClassroomSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         classroom = serializer.save()
+        _set_classroom_teachers(classroom, request.data.get('teacher_ids', []))
         return Response(ClassroomSerializer(classroom).data, status=201)
 
-    qs = Classroom.objects.select_related('level').all()
+    qs = Classroom.objects.select_related('level').prefetch_related('teachers__profile').all()
     search = request.query_params.get('search', '').strip()
     if search:
         qs = qs.filter(name__icontains=search)
@@ -237,12 +242,20 @@ def classroom_list(request):
     return Response(classrooms)
 
 
+def _set_classroom_teachers(classroom, teacher_ids):
+    """设置班级老师（接受 id 列表）"""
+    if teacher_ids is None:
+        return
+    ids = [int(i) for i in teacher_ids if str(i).isdigit() or isinstance(i, int)]
+    classroom.teachers.set(User.objects.filter(id__in=ids))
+
+
 @api_view(['GET', 'PUT', 'DELETE'])
 @permission_classes([AdminPermission])
 def classroom_detail(request, pk):
     """获取 / 更新 / 删除班级"""
     try:
-        classroom = Classroom.objects.select_related('level').get(pk=pk)
+        classroom = Classroom.objects.select_related('level').prefetch_related('teachers__profile').get(pk=pk)
     except Classroom.DoesNotExist:
         return Response({'detail': '班级不存在'}, status=404)
 
@@ -254,6 +267,8 @@ def classroom_detail(request, pk):
         serializer = ClassroomSerializer(classroom, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+        if 'teacher_ids' in request.data:
+            _set_classroom_teachers(classroom, request.data['teacher_ids'])
         data = ClassroomSerializer(classroom).data
         data['member_count'] = classroom.members.count()
         return Response(data)

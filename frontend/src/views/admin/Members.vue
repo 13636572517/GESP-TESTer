@@ -62,9 +62,9 @@
         </el-table-column>
         <el-table-column label="角色" width="90">
           <template #default="{ row }">
-            <el-tag :type="row.is_admin ? 'danger' : ''" size="small">
-              {{ row.is_admin ? '管理员' : '学员' }}
-            </el-tag>
+            <el-tag v-if="row.is_admin" type="danger" size="small">管理员</el-tag>
+            <el-tag v-else-if="row.is_teacher" type="warning" size="small">老师</el-tag>
+            <el-tag v-else size="small">学员</el-tag>
           </template>
         </el-table-column>
         <el-table-column label="所在班级" min-width="160" show-overflow-tooltip>
@@ -118,6 +118,9 @@
         </el-form-item>
         <el-form-item label="管理员">
           <el-switch v-model="editForm.is_admin" active-text="是" inactive-text="否" />
+        </el-form-item>
+        <el-form-item label="老师">
+          <el-switch v-model="editForm.is_teacher" active-text="是" inactive-text="否" />
         </el-form-item>
         <el-divider content-position="left" style="margin: 8px 0">重置密码（选填）</el-divider>
         <el-form-item label="新密码">
@@ -182,6 +185,9 @@
         <el-form-item label="管理员">
           <el-switch v-model="createForm.is_admin" active-text="是" inactive-text="否" />
         </el-form-item>
+        <el-form-item label="老师">
+          <el-switch v-model="createForm.is_teacher" active-text="是" inactive-text="否" />
+        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="createVisible = false">取消</el-button>
@@ -213,7 +219,7 @@ const editId = ref(null)
 
 const createVisible = ref(false)
 const creating = ref(false)
-const createForm = ref({ username: '', password: '', nickname: '', current_level: 1, is_admin: false })
+const createForm = ref({ username: '', password: '', nickname: '', current_level: 1, is_admin: false, is_teacher: false })
 
 async function loadUsers() {
   loading.value = true
@@ -231,7 +237,7 @@ async function loadUsers() {
 }
 
 function showCreate() {
-  createForm.value = { username: '', password: '', nickname: '', current_level: 1, is_admin: false }
+  createForm.value = { username: '', password: '', nickname: '', current_level: 1, is_admin: false, is_teacher: false }
   createVisible.value = true
 }
 
@@ -257,6 +263,7 @@ function showEdit(row) {
     nickname: row.nickname,
     current_level: row.current_level,
     is_admin: row.is_admin,
+    is_teacher: row.is_teacher,
     new_password: '',
   }
   editVisible.value = true
@@ -272,6 +279,7 @@ async function handleSave() {
       nickname: editForm.value.nickname,
       current_level: editForm.value.current_level,
       is_admin: editForm.value.is_admin,
+      is_teacher: editForm.value.is_teacher,
     }
     if (editForm.value.new_password) payload.new_password = editForm.value.new_password
     await updateAdminUser(editId.value, payload)

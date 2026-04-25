@@ -43,6 +43,14 @@
           <span>学习统计</span>
         </el-menu-item>
 
+        <el-sub-menu index="teacher" v-if="userStore.isTeacher || userStore.isAdmin">
+          <template #title>
+            <el-icon><School /></el-icon>
+            <span>教师中心</span>
+          </template>
+          <el-menu-item index="/teacher/classes">我的班级</el-menu-item>
+        </el-sub-menu>
+
         <el-sub-menu index="admin" v-if="userStore.isAdmin">
           <template #title>
             <el-icon><Setting /></el-icon>

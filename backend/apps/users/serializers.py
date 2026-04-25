@@ -53,8 +53,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = UserProfile
-        fields = ['id', 'username', 'phone', 'avatar', 'nickname', 'current_level', 'is_admin', 'created_at']
-        read_only_fields = ['id', 'phone', 'is_admin', 'created_at']
+        fields = ['id', 'username', 'phone', 'avatar', 'nickname', 'current_level', 'is_admin', 'is_teacher', 'created_at']
+        read_only_fields = ['id', 'phone', 'is_admin', 'is_teacher', 'created_at']
 
 
 class ChangePasswordSerializer(serializers.Serializer):
@@ -71,13 +71,14 @@ class AdminUserSerializer(serializers.ModelSerializer):
     phone = serializers.CharField(source='profile.phone', read_only=True)
     current_level = serializers.IntegerField(source='profile.current_level', read_only=True)
     is_admin = serializers.BooleanField(source='profile.is_admin', read_only=True)
+    is_teacher = serializers.BooleanField(source='profile.is_teacher', read_only=True)
     avatar = serializers.SerializerMethodField()
     created_at = serializers.DateTimeField(source='profile.created_at', read_only=True)
     class_names = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'phone', 'nickname', 'current_level', 'is_admin', 'avatar', 'created_at', 'class_names']
+        fields = ['id', 'username', 'phone', 'nickname', 'current_level', 'is_admin', 'is_teacher', 'avatar', 'created_at', 'class_names']
 
     def get_avatar(self, obj):
         try:
@@ -108,8 +109,20 @@ class ClassroomMemberSerializer(serializers.ModelSerializer):
 class ClassroomSerializer(serializers.ModelSerializer):
     level_name = serializers.CharField(source='level.name', read_only=True, default='')
     member_count = serializers.IntegerField(read_only=True)
+    teacher_ids = serializers.SerializerMethodField()
+    teacher_names = serializers.SerializerMethodField()
 
     class Meta:
         model = Classroom
-        fields = ['id', 'name', 'description', 'level', 'level_name', 'is_active', 'member_count', 'created_at']
+        fields = ['id', 'name', 'description', 'level', 'level_name', 'is_active', 'member_count', 'teacher_ids', 'teacher_names', 'created_at']
         read_only_fields = ['id', 'created_at']
+
+    def get_teacher_ids(self, obj):
+        return list(obj.teachers.values_list('id', flat=True))
+
+    def get_teacher_names(self, obj):
+        result = []
+        for u in obj.teachers.select_related('profile').all():
+            p = getattr(u, 'profile', None)
+            result.append(p.nickname if p and p.nickname else u.username)
+        return result

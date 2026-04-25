@@ -23,6 +23,9 @@
                   <el-tag size="small" type="info" v-if="cls.level_name">{{ cls.level_name }}</el-tag>
                   <span style="font-size: 12px; color: #9CA3AF; margin-left: 6px">{{ cls.member_count }} 人</span>
                 </div>
+                <div v-if="cls.teacher_names?.length" style="font-size: 12px; color: #6B7280; margin-top: 4px">
+                  老师：{{ cls.teacher_names.join('、') }}
+                </div>
               </div>
               <div style="display: flex; gap: 4px" @click.stop>
                 <el-button class="op-btn op-edit" size="small" @click="showEdit(cls)">编辑</el-button>
@@ -89,6 +92,22 @@
         <el-form-item label="描述">
           <el-input v-model="classForm.description" type="textarea" :rows="2" placeholder="可选备注" />
         </el-form-item>
+        <el-form-item label="授课老师">
+          <el-select
+            v-model="classForm.teacher_ids"
+            multiple
+            filterable
+            placeholder="选择老师（可多选）"
+            style="width: 100%"
+          >
+            <el-option
+              v-for="t in teacherOptions"
+              :key="t.id"
+              :label="`${t.nickname || t.username}${t.phone ? ' · ' + t.phone : ''}`"
+              :value="t.id"
+            />
+          </el-select>
+        </el-form-item>
         <el-form-item label="状态">
           <el-switch v-model="classForm.is_active" active-text="启用" inactive-text="停用" />
         </el-form-item>
@@ -140,7 +159,7 @@ import { Plus } from '@element-plus/icons-vue'
 import {
   getClassrooms, createClassroom, updateClassroom, deleteClassroom,
   getClassroomMembers, addClassroomMember, removeClassroomMember,
-  getAdminUsers,
+  getAdminUsers, getTeacherUsers,
 } from '../../api/admin'
 
 const classrooms = ref([])
@@ -152,7 +171,8 @@ const membersLoading = ref(false)
 const classDialogVisible = ref(false)
 const editingClass = ref(null)
 const classSaving = ref(false)
-const classForm = ref({ name: '', description: '', level: null, is_active: true })
+const classForm = ref({ name: '', description: '', level: null, is_active: true, teacher_ids: [] })
+const teacherOptions = ref([])
 
 // 添加成员
 const addMemberVisible = ref(false)
@@ -178,6 +198,21 @@ async function loadClassrooms() {
   classrooms.value = res
 }
 
+async function loadTeacherOptions() {
+  try {
+    const res = await getTeacherUsers()
+    // 管理员也可以担任老师
+    const adminRes = await getAdminUsers({ is_admin: 'true', page_size: 100 })
+    const all = [...(res.results || res), ...(adminRes.results || [])]
+    const seen = new Set()
+    teacherOptions.value = all.filter(u => {
+      if (seen.has(u.id)) return false
+      seen.add(u.id)
+      return true
+    })
+  } catch { /* ignore */ }
+}
+
 async function selectClass(cls) {
   selectedClass.value = cls
   membersLoading.value = true
@@ -190,7 +225,7 @@ async function selectClass(cls) {
 
 function showCreate() {
   editingClass.value = null
-  classForm.value = { name: '', description: '', level: null, is_active: true }
+  classForm.value = { name: '', description: '', level: null, is_active: true, teacher_ids: [] }
   classDialogVisible.value = true
 }
 
@@ -201,6 +236,7 @@ function showEdit(cls) {
     description: cls.description,
     level: cls.level || null,
     is_active: cls.is_active,
+    teacher_ids: cls.teacher_ids || [],
   }
   classDialogVisible.value = true
 }
@@ -217,6 +253,7 @@ async function handleSaveClass() {
       description: classForm.value.description.trim(),
       level: classForm.value.level || null,
       is_active: classForm.value.is_active,
+      teacher_ids: classForm.value.teacher_ids,
     }
     if (editingClass.value) {
       await updateClassroom(editingClass.value.id, payload)
@@ -295,7 +332,10 @@ function formatDate(str) {
   return new Date(str).toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-')
 }
 
-onMounted(loadClassrooms)
+onMounted(() => {
+  loadClassrooms()
+  loadTeacherOptions()
+})
 </script>
 
 <style scoped>

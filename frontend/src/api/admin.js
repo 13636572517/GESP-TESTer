@@ -58,7 +58,13 @@ export function pdfExtract(formData) {
 }
 export const pdfImportConfirm = (questions) => request.post('/admin/questions/pdf-import/', { questions })
 
-// 会员管理
+// 教师中心
+export const getTeacherClasses = () => request.get('/teacher/classes/')
+export const getTeacherClassOverview = (id, params) => request.get(`/teacher/classes/${id}/overview/`, { params })
+export const getTeacherStudentExams = (classId, userId, params) => request.get(`/teacher/classes/${classId}/students/${userId}/exams/`, { params })
+
+// 会员管理（含老师列表查询）
+export const getTeacherUsers = () => request.get('/admin/users/', { params: { is_teacher: 'true', page_size: 200 } })
 export const getAdminUsers = (params) => request.get('/admin/users/', { params })
 export const createAdminUser = (data) => request.post('/admin/users/', data)
 export const updateAdminUser = (id, data) => request.put(`/admin/users/${id}/`, data)

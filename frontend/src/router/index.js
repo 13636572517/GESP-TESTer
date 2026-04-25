@@ -100,6 +100,19 @@ const routes = [
         name: 'MyFeedbacks',
         component: () => import('../views/profile/MyFeedbacks.vue'),
       },
+      // 教师中心
+      {
+        path: 'teacher/classes',
+        name: 'TeacherClasses',
+        component: () => import('../views/teacher/TeacherClasses.vue'),
+        meta: { teacher: true },
+      },
+      {
+        path: 'teacher/classes/:id',
+        name: 'TeacherClassStats',
+        component: () => import('../views/teacher/ClassStats.vue'),
+        meta: { teacher: true },
+      },
       // 管理端
       {
         path: 'admin/questions',
@@ -193,6 +206,10 @@ router.beforeEach(async (to, from, next) => {
   }
 
   if (to.meta.admin && !userStore.isAdmin) {
+    return next('/')
+  }
+
+  if (to.meta.teacher && !userStore.isAdmin && !userStore.isTeacher) {
     return next('/')
   }
 
