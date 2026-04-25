@@ -436,12 +436,10 @@ function moveDown(idx) {
 }
 function autoSort() {
   selectedQuestions.value.sort((a, b) => {
-    // 1. 选择题(1) 优先于判断题(3)
+    // 1. 先选择题(1)，后判断题(3)
     if (a.question_type !== b.question_type) return a.question_type - b.question_type
-    // 2. 难度升序：简单(1) < 中等(2) < 困难(3)
-    if (a.difficulty !== b.difficulty) return a.difficulty - b.difficulty
-    // 3. 导入时间升序
-    return new Date(a.created_at) - new Date(b.created_at)
+    // 2. 同题型按题目 ID 升序（题号小的在前）
+    return a.id - b.id
   })
 }
 
