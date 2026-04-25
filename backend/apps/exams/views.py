@@ -103,11 +103,11 @@ def start_exam(request):
         if actual_choice == 0 and actual_judge == 0:
             return Response({'detail': '该级别暂无题目'}, status=400)
 
-        selected_choice = random.sample(choice_ids, actual_choice) if actual_choice else []
-        selected_judge = random.sample(judge_ids, actual_judge) if actual_judge else []
+        selected_choice = sorted(random.sample(choice_ids, actual_choice)) if actual_choice else []
+        selected_judge = sorted(random.sample(judge_ids, actual_judge)) if actual_judge else []
 
-        # 先选择题，再判断题
-        selected = selected_choice + selected_judge
+        # 先判断题，再选择题；同题型内题号小的优先
+        selected = selected_judge + selected_choice
         total_count = len(selected)
         score_per_q = 100 // total_count if total_count else 0
 
