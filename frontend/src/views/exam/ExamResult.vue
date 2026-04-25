@@ -48,8 +48,21 @@
                   💬 AI 讲解
                 </button>
               </div>
-              <div class="question-content" v-html="answer.question?.content?.substring(0, 150)" v-highlight></div>
-              <div v-if="!answer.is_correct" class="answer-row">
+              <div class="question-content" v-html="answer.question?.content" v-highlight></div>
+              <div v-if="answer.question?.question_type !== 3 && answer.question?.options?.length" class="options-list">
+                <div
+                  v-for="opt in answer.question.options" :key="opt.key"
+                  class="opt-item"
+                  :class="{
+                    'opt-correct': answer.question.answer?.includes(opt.key),
+                    'opt-wrong': answer.user_answer?.includes(opt.key) && !answer.question.answer?.includes(opt.key)
+                  }"
+                >
+                  <span class="opt-key">{{ opt.key }}.</span>
+                  <span v-html="opt.text" />
+                </div>
+              </div>
+              <div class="answer-row">
                 <span class="wrong-ans">你的答案：{{ answer.user_answer || '未作答' }}</span>
                 <span class="right-ans">正确答案：{{ answer.question?.answer }}</span>
               </div>
@@ -114,6 +127,16 @@ onMounted(async () => {
 }
 .wrong-ans { color: #D92916; }
 .right-ans  { color: #00A60E; }
+
+.options-list { display: flex; flex-direction: column; gap: 4px; margin: 6px 0; }
+.opt-item {
+  display: flex; align-items: flex-start; gap: 6px;
+  padding: 4px 8px; border-radius: 4px; font-size: 13px;
+  background: #F9FAFB; border: 1px solid #E5E7EB;
+}
+.opt-correct { background: #F0FDF4; border-color: #86EFAC; color: #15803D; }
+.opt-wrong   { background: #FEF2F2; border-color: #FCA5A5; color: #B91C1C; }
+.opt-key     { font-weight: 600; min-width: 18px; flex-shrink: 0; }
 
 .explanation {
   font-size: 13px;

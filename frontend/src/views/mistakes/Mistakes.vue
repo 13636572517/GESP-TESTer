@@ -38,8 +38,21 @@
       <div v-for="item in mistakes" :key="item.id" class="mistake-item">
         <div style="display: flex; justify-content: space-between; align-items: flex-start">
           <div style="flex: 1">
-            <div v-html="item.question?.content?.substring(0, 150)" style="font-size: 15px"></div>
-            <div style="margin-top: 8px; font-size: 13px; color: #6B7280">
+            <div v-html="item.question?.content" style="font-size: 15px"></div>
+            <div v-if="item.question?.question_type !== 3 && item.question?.options?.length" class="options-list">
+              <div
+                v-for="opt in item.question.options" :key="opt.key"
+                class="opt-item"
+                :class="{ 'opt-correct': item.question.answer?.includes(opt.key) }"
+              >
+                <span class="opt-key">{{ opt.key }}.</span>
+                <span v-html="opt.text" />
+              </div>
+            </div>
+            <div style="margin-top: 6px; font-size: 13px; color: #15803D">
+              正确答案：{{ item.question?.answer }}
+            </div>
+            <div style="margin-top: 4px; font-size: 13px; color: #6B7280">
               错误 {{ item.wrong_count }} 次 | 连续正确 {{ item.consecutive_correct }} 次
             </div>
           </div>
@@ -139,6 +152,15 @@ onMounted(async () => {
 .mistake-item:last-child {
   border-bottom: none;
 }
+.options-list { display: flex; flex-direction: column; gap: 4px; margin: 6px 0; }
+.opt-item {
+  display: flex; align-items: flex-start; gap: 6px;
+  padding: 4px 8px; border-radius: 4px; font-size: 13px;
+  background: #F9FAFB; border: 1px solid #E5E7EB;
+}
+.opt-correct { background: #F0FDF4; border-color: #86EFAC; color: #15803D; }
+.opt-key { font-weight: 600; min-width: 18px; flex-shrink: 0; }
+
 /* AI 讲解按钮 */
 .btn-ai {
   display: inline-flex;
