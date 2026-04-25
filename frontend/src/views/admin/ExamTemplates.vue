@@ -133,13 +133,17 @@
                   <el-option label="多选题" :value="2" />
                   <el-option label="判断题" :value="3" />
                 </el-select>
-                <el-input
+                <el-select
                   v-model="filters.source"
                   placeholder="来源"
                   size="small"
                   clearable
-                  style="width:110px"
-                />
+                  filterable
+                  style="width:140px"
+                  @change="onSourceFilterChange"
+                >
+                  <el-option v-for="s in sourceOptions" :key="s" :label="s" :value="s" />
+                </el-select>
               </div>
             </div>
 
@@ -366,6 +370,19 @@ const scorePerQ = computed(() => {
   return n ? Math.floor(form.value.total_score / n) : 0
 })
 
+const sourceOptions = computed(() => {
+  const set = new Set()
+  allQuestions.value.forEach(q => { if (q.source) set.add(q.source) })
+  return [...set].sort()
+})
+
+function onSourceFilterChange(val) {
+  // 选中来源时自动填充名称（仅当名称为空，或来源唯一时覆盖）
+  if (val && (!form.value.name || sourceOptions.value.length === 1)) {
+    form.value.name = val
+  }
+}
+
 // ─── 辅助 ───────────────────────────────────────────
 function stripHtml(html) {
   return html ? html.replace(/<[^>]+>/g, '') : ''
@@ -441,8 +458,14 @@ async function loadAvailableQuestions() {
   try {
     const res = await getQuestions({ level: form.value.level, page_size: 1000, for_exam: 1 })
     const items = res.results || res
-    items.forEach(q => { q._text = stripHtml(q.content) })   // 预计算纯文本，过滤无需重复正则
+    items.forEach(q => { q._text = stripHtml(q.content) })
     allQuestions.value = items
+    // 若该级别题库来源唯一且名称为空，自动填充
+    const sources = [...new Set(items.map(q => q.source).filter(Boolean))]
+    if (sources.length === 1 && !form.value.name) {
+      form.value.name = sources[0]
+      filters.value.source = sources[0]
+    }
   } finally {
     loading.value = false
   }
