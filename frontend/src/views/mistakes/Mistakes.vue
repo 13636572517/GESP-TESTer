@@ -52,6 +52,9 @@
             <div style="margin-top: 6px; font-size: 13px; color: #15803D">
               正确答案：{{ item.question?.answer }}
             </div>
+            <div v-if="item.question?.explanation" style="margin-top: 6px; font-size: 13px; color: #6B7280; padding: 6px 8px; background: #F9FAFB; border-radius: 4px">
+              解析：{{ item.question.explanation }}
+            </div>
             <div style="margin-top: 4px; font-size: 13px; color: #6B7280">
               错误 {{ item.wrong_count }} 次 | 连续正确 {{ item.consecutive_correct }} 次
             </div>
