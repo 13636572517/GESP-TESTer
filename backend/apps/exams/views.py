@@ -429,6 +429,9 @@ def import_exam_templates(request):
                 t = existing
                 updated_count += 1
             else:
+                # 若 CSV 指定了 ID，强制使用该 ID 以保持跨库导入的关联一致性
+                if t_id:
+                    fields['id'] = int(t_id)
                 t = ExamTemplate.objects.create(**fields)
                 created_count += 1
 
