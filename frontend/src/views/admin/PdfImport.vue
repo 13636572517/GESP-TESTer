@@ -294,10 +294,11 @@ const failedContents = ref({})
 
 function renderContent(text) {
   if (!text) return ''
-  // 把 ```code``` 转为 <pre><code>，行内 `code` 转为 <code>
+  const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  // 去掉语言标识符（如 ```cpp\n），再转为 <pre><code>
   return text
-    .replace(/```([\s\S]*?)```/g, (_, c) => `<pre><code>${c.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code></pre>`)
-    .replace(/`([^`]+)`/g, (_, c) => `<code>${c.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</code>`)
+    .replace(/```(?:\w+\n)?([\s\S]*?)```/g, (_, c) => `<pre><code>${esc(c.trim())}</code></pre>`)
+    .replace(/`([^`]+)`/g, (_, c) => `<code>${esc(c)}</code>`)
 }
 
 function deleteCurrentQ() {
