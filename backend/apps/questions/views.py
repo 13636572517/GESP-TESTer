@@ -452,6 +452,14 @@ def pdf_import_confirm(request):
 
     created, errors = [], []
     for i, q_data in enumerate(questions_data):
+        # 将 ```code``` / `code` 转为 <pre>/<code>，并转义 HTML 特殊字符
+        q_data = dict(q_data)
+        q_data['content'] = convert_code_markers(q_data.get('content', ''))
+        if isinstance(q_data.get('options'), list):
+            q_data['options'] = [
+                {**opt, 'text': convert_code_markers(opt.get('text', ''))}
+                for opt in q_data['options']
+            ]
         serializer = QuestionCreateSerializer(data=q_data, context={'request': request})
         if serializer.is_valid():
             instance = serializer.save()
