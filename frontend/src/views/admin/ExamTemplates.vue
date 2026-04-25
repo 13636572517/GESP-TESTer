@@ -39,9 +39,10 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column label="操作" width="260" fixed="right">
           <template #default="{ row }">
             <div style="display:flex;gap:4px;flex-wrap:nowrap">
+              <el-button class="op-btn op-preview" size="small" @click="openPaperEdit(row)">预览编辑</el-button>
               <el-button class="op-btn op-edit" size="small" @click="showEditDialog(row)">编辑</el-button>
               <el-button
                 class="op-btn"
@@ -283,6 +284,101 @@
       </template>
     </el-dialog>
 
+    <!-- 试卷预览/题目编辑弹窗 -->
+    <el-dialog
+      v-model="paperEditVisible"
+      :title="`试卷预览 · 题目编辑 — ${paperTitle}`"
+      width="90vw"
+      :style="{ maxWidth: '1280px' }"
+      align-center
+      :close-on-click-modal="false"
+      destroy-on-close
+    >
+      <div class="paper-edit-body">
+        <!-- 左：题目列表 -->
+        <div class="paper-left">
+          <div v-if="loadingPaper" style="text-align:center;padding:40px 0;color:#909399">加载中…</div>
+          <template v-else>
+            <div
+              v-for="(q, idx) in paperQuestions"
+              :key="q.id"
+              class="paper-q-row"
+              :class="{ 'paper-q-active': selectedPaperIdx === idx }"
+              @click="selectPaperQ(idx)"
+            >
+              <div class="paper-q-num">{{ idx + 1 }}</div>
+              <div class="paper-q-info">
+                <div class="paper-q-meta">
+                  <el-tag size="small" :type="typeColor(q.question_type)">{{ typeLabel(q.question_type) }}</el-tag>
+                  <el-tag v-if="q._saved" size="small" type="success" style="margin-left:4px">已保存</el-tag>
+                </div>
+                <div class="paper-q-preview" v-html="q.content" />
+              <div v-if="q.question_type !== 3 && q.options?.length" class="paper-q-options">
+                <div v-for="opt in q.options" :key="opt.key" class="paper-q-opt">
+                  <span class="paper-q-opt-key">{{ opt.key }}.</span>
+                  <span v-html="opt.text" />
+                </div>
+              </div>
+              </div>
+            </div>
+            <div v-if="paperQuestions.length === 0" style="text-align:center;padding:40px 0;color:#909399">暂无题目</div>
+          </template>
+        </div>
+
+        <!-- 右：编辑表单 -->
+        <div class="paper-right">
+          <template v-if="selectedPaperIdx !== null">
+            <div class="edit-section">
+              <div class="edit-label">题干（原始 HTML）</div>
+              <el-input v-model="editForm.content" type="textarea" :rows="4" placeholder="支持 HTML 和 ```代码块```" />
+              <div class="edit-rendered-preview" v-html="editForm.content" />
+            </div>
+            <div class="edit-section">
+              <div class="edit-label">题型</div>
+              <el-radio-group v-model="editForm.question_type">
+                <el-radio :value="1">单选题</el-radio>
+                <el-radio :value="2">多选题</el-radio>
+                <el-radio :value="3">判断题</el-radio>
+              </el-radio-group>
+            </div>
+            <div v-if="editForm.question_type !== 3" class="edit-section">
+              <div class="edit-label" style="display:flex;align-items:center;gap:8px">
+                选项
+                <el-button size="small" @click="addOption">+ 添加</el-button>
+              </div>
+              <div v-for="(opt, oi) in editForm.options" :key="oi" class="opt-edit-row">
+                <span class="opt-edit-key">{{ opt.key }}.</span>
+                <div style="flex:1;display:flex;flex-direction:column;gap:4px">
+                  <el-input v-model="opt.text" type="textarea" :rows="2" />
+                  <div v-if="opt.text" class="edit-rendered-preview" v-html="opt.text" />
+                </div>
+                <el-button :icon="Delete" size="small" circle type="danger" @click="removeOption(oi)" />
+              </div>
+            </div>
+            <div class="edit-section">
+              <div class="edit-label">答案</div>
+              <el-input v-model="editForm.answer" placeholder="如 A、AB、T 或 F" style="width:220px" />
+            </div>
+            <div class="edit-section">
+              <div class="edit-label">解析</div>
+              <el-input v-model="editForm.explanation" type="textarea" :rows="3" />
+            </div>
+            <div class="edit-section">
+              <div class="edit-label">来源</div>
+              <el-input v-model="editForm.source" style="width:280px" />
+            </div>
+            <div class="edit-foot">
+              <el-button type="primary" :loading="savingQ" @click="saveQ">保存本题</el-button>
+            </div>
+          </template>
+          <div v-else class="paper-right-hint">← 点击左侧题目开始编辑</div>
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="paperEditVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
+
     <!-- 导入对话框 -->
     <el-dialog v-model="importDialogVisible" title="导入试卷" width="480px">
       <el-alert type="info" :closable="false" style="margin-bottom:14px">
@@ -313,7 +409,7 @@
 import { ref, reactive, computed, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Plus, Delete, ArrowUp, ArrowDown, View } from '@element-plus/icons-vue'
-import { getQuestions, getExamTemplates, getExamTemplateDetail, createExamTemplate, updateExamTemplate, patchExamTemplate, deleteExamTemplate, exportExamTemplates, importExamTemplates } from '../../api/admin'
+import { getQuestions, getExamTemplates, getExamTemplateDetail, createExamTemplate, updateExamTemplate, updateAdminQuestion, patchExamTemplate, deleteExamTemplate, exportExamTemplates, importExamTemplates } from '../../api/admin'
 
 // ─── 基础状态 ────────────────────────────────────────
 const templates        = ref([])
@@ -608,6 +704,88 @@ async function handleImport() {
   } catch { ElMessage.error('导入失败') } finally { importing.value = false }
 }
 
+// ─── 试卷预览/题目编辑 ──────────────────────────────
+const paperEditVisible  = ref(false)
+const paperTitle        = ref('')
+const paperQuestions    = ref([])
+const selectedPaperIdx  = ref(null)
+const editForm          = ref({})
+const savingQ           = ref(false)
+const loadingPaper      = ref(false)
+
+function typeLabel(t) {
+  return t === 1 ? '单选' : t === 2 ? '多选' : '判断'
+}
+
+async function openPaperEdit(row) {
+  paperTitle.value       = row.name
+  paperQuestions.value   = []
+  selectedPaperIdx.value = null
+  editForm.value         = {}
+  loadingPaper.value     = true
+  paperEditVisible.value = true
+  try {
+    const detail = await getExamTemplateDetail(row.id)
+    paperQuestions.value = (detail.question_items || []).map(q => ({ ...q, _saved: false }))
+  } finally {
+    loadingPaper.value = false
+  }
+}
+
+function selectPaperQ(idx) {
+  selectedPaperIdx.value = idx
+  const q = paperQuestions.value[idx]
+  editForm.value = {
+    content:       q.content       || '',
+    question_type: q.question_type,
+    options:       q.options ? JSON.parse(JSON.stringify(q.options)) : [],
+    answer:        q.answer        || '',
+    explanation:   q.explanation   || '',
+    source:        q.source        || '',
+  }
+}
+
+function addOption() {
+  const nextKey = String.fromCharCode(65 + editForm.value.options.length)
+  editForm.value.options.push({ key: nextKey, text: '' })
+}
+
+function removeOption(idx) {
+  editForm.value.options.splice(idx, 1)
+  editForm.value.options.forEach((opt, i) => { opt.key = String.fromCharCode(65 + i) })
+}
+
+async function saveQ() {
+  const idx = selectedPaperIdx.value
+  if (idx === null) return
+  const q = paperQuestions.value[idx]
+  savingQ.value = true
+  try {
+    await updateAdminQuestion(q.id, {
+      content:       editForm.value.content,
+      question_type: editForm.value.question_type,
+      options:       editForm.value.question_type !== 3 ? editForm.value.options : [],
+      answer:        editForm.value.answer,
+      explanation:   editForm.value.explanation,
+      source:        editForm.value.source,
+    })
+    Object.assign(paperQuestions.value[idx], {
+      content:       editForm.value.content,
+      question_type: editForm.value.question_type,
+      options:       editForm.value.options,
+      answer:        editForm.value.answer,
+      explanation:   editForm.value.explanation,
+      source:        editForm.value.source,
+      _saved:        true,
+    })
+    ElMessage.success('保存成功')
+  } catch {
+    ElMessage.error('保存失败')
+  } finally {
+    savingQ.value = false
+  }
+}
+
 onMounted(loadTemplates)
 </script>
 
@@ -811,4 +989,128 @@ onMounted(loadTemplates)
   border-color: #FECACA !important;
 }
 .op-delete:hover { color: #991B1B !important; background: #FEE2E2 !important; border-color: #F87171 !important; }
+.op-preview {
+  color: #6D28D9 !important;
+  background: #F5F3FF !important;
+  border-color: #C4B5FD !important;
+}
+.op-preview:hover { color: #5B21B6 !important; background: #EDE9FE !important; border-color: #7C3AED !important; }
+
+/* 试卷预览/编辑弹窗 */
+.paper-edit-body {
+  display: flex;
+  gap: 0;
+  height: 70vh;
+  overflow: hidden;
+}
+
+.paper-left {
+  flex: 1;
+  border-right: 1px solid #e4e7ed;
+  overflow-y: auto;
+  padding: 4px 0;
+}
+
+.paper-q-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid #f0f0f0;
+  transition: background 0.15s;
+}
+.paper-q-row:hover { background: #f5f7fa; }
+.paper-q-active { background: #ecf5ff !important; border-left: 3px solid #409eff; }
+
+.paper-q-num {
+  min-width: 24px;
+  font-weight: 700;
+  font-size: 13px;
+  color: #606266;
+  padding-top: 2px;
+  flex-shrink: 0;
+}
+.paper-q-info { flex: 1; min-width: 0; }
+.paper-q-meta { display: flex; align-items: center; margin-bottom: 4px; }
+.paper-q-preview {
+  font-size: 12px; color: #606266; line-height: 1.5; word-break: break-all;
+}
+.paper-q-preview :deep(pre) {
+  font-size: 11px; background: #f5f5f5; padding: 3px 6px;
+  border-radius: 3px; white-space: pre-wrap; word-break: break-all;
+  overflow: hidden; margin: 2px 0;
+}
+.paper-q-preview :deep(code) { font-size: 11px; background: #f0f0f0; padding: 0 3px; border-radius: 2px; }
+.paper-q-options { margin-top: 4px; }
+.paper-q-opt { font-size: 11px; color: #909399; line-height: 1.6; word-break: break-all; display: flex; align-items: flex-start; }
+.paper-q-opt :deep(pre) { font-size: 11px; background: #f5f5f5; padding: 2px 6px; border-radius: 3px; white-space: pre-wrap; word-break: break-all; overflow: hidden; margin: 1px 0; }
+.paper-q-opt :deep(code) { font-size: 11px; }
+.paper-q-opt-key { font-weight: 600; margin-right: 3px; flex-shrink: 0; }
+
+/* 右侧实时渲染预览 */
+.edit-rendered-preview {
+  font-size: 13px; color: #374151; line-height: 1.6;
+  padding: 6px 10px; background: #f9fafb;
+  border: 1px solid #e4e7ed; border-radius: 4px; margin-top: 4px;
+  word-break: break-all;
+}
+.edit-rendered-preview :deep(pre) {
+  background: #1e1e1e; color: #d4d4d4;
+  padding: 8px 12px; border-radius: 4px;
+  white-space: pre-wrap; word-break: break-all;
+  font-size: 12px; overflow-x: auto; margin: 4px 0;
+}
+.edit-rendered-preview :deep(code) {
+  font-family: 'Courier New', monospace; font-size: 12px;
+  background: #f0f0f0; padding: 1px 4px; border-radius: 3px;
+}
+
+.paper-right {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.paper-right-hint {
+  color: #909399;
+  font-size: 14px;
+  margin: auto;
+  text-align: center;
+}
+
+.edit-section {
+  margin-bottom: 16px;
+}
+.edit-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.opt-edit-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.opt-edit-key {
+  font-weight: 700;
+  min-width: 20px;
+  padding-top: 8px;
+  flex-shrink: 0;
+  color: #374151;
+}
+
+.edit-foot {
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid #e4e7ed;
+}
 </style>

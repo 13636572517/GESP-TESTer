@@ -70,4 +70,4 @@ class QuestionForExamSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Question
-        fields = ['id', 'question_type', 'type_display', 'difficulty', 'content', 'options', 'source', 'created_at']
+        fields = ['id', 'question_type', 'type_display', 'difficulty', 'content', 'options', 'answer', 'explanation', 'source', 'created_at']

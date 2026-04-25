@@ -79,7 +79,7 @@ def start_exam(request):
         # 随机组卷：固定15道选择题 + 10道判断题，先选择后判断
         CHOICE_COUNT = 15
         JUDGE_COUNT = 10
-        DURATION = 60
+        DURATION = 45
 
         # question_source: 1=真题库, 2=AI题库, 不传=全部
         question_source = request.data.get('question_source')
